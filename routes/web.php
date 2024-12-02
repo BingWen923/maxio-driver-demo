@@ -16,4 +16,5 @@ Route::put('students/{student}', [studentController::class, 'update'])->name('st
 Route::delete('students/{student}', [studentController::class, 'destroy'])->name('students.destroy');
 
 Route::post('students/insert', [studentController::class, 'insert'])->name('students.insert');
+Route::get('students/selectwhere', [studentController::class, 'selectwhere'])->name('students.selectwhere');
 

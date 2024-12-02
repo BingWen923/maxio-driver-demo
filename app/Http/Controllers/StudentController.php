@@ -25,6 +25,23 @@ class StudentController extends Controller
         return view('students.index', compact('students'));
     }
 
+    public function selectwhere()
+    {
+        // Get students with grades equal to 11
+        $students = Student::where('grades', 11)->get();
+
+        // Convert id field to integer for each student
+        $students = $students->map(function ($student) {
+            $student->id = (int) $student->id;
+            return $student;
+        });
+        // Sort by id in ascending order
+        $students = $students->sortBy('id');
+        //dd($students);
+
+        return view('students.index', compact('students'));
+    }
+
     public function create()
     {
         // Show create student form

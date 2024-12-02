@@ -5,9 +5,10 @@
 @section('content')
     <h1 class="text-center mb-4">All Students</h1>
     <a href="{{ route('students.create') }}" class="btn btn-primary mb-3">Add student</a>
+    <a href="{{ route('students.selectwhere') }}" class="btn btn-primary mb-3">conditional select</a>
     <form action="{{ route('students.insert') }}" method="POST">
         @csrf
-            <textarea name="InsertStudents" id="InsertStudents" class="form-control" rows="10" required>
+            <textarea name="InsertStudents" id="InsertStudents" class="form-control" rows="5" required>
 [
     {"name": "Alice", "email": "alice@example.com", "grades": 25},
     {"name": "Bob", "email": "bob@example.com", "grades": 30},
