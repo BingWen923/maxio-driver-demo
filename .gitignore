@@ -1,0 +1,59 @@
+# Ignore operating system generated files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE and editor configuration files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.bak
+*.tmp
+*.exe
+
+# Ignore Composer dependencies and lock files
+/vendor/
+/composer.lock
+
+# Ignore environment configuration files
+.env
+.env.*.local
+
+# Ignore PHP cache and log files
+*.log
+*.cache
+*.key
+*.pid
+*.seed
+*.sql
+*.sqlite
+phpunit.result.cache
+
+# Ignore cache and temporary files
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+
+# Ignore Laravel specific files and directories
+/public/storage
+/public/hot
+/public/hot.json
+/storage/*.key
+/bootstrap/cache/*.php
+
+# Ignore Symfony specific files and directories
+/var/cache/*
+/var/log/*
+
+# Ignore PHPUnit result cache
+.phpunit.result.cache
+
+# Ignore build and distribution directories
+/build
+/dist
+
+# Ignore Node.js dependencies (if Node.js is used
+/node_modules
+
