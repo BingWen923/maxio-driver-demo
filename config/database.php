@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'maxio'),
+    'default' => env('DB_CONNECTION', 'minio'),
 
     /*
     |--------------------------------------------------------------------------
@@ -30,6 +30,16 @@ return [
     */
 
     'connections' => [
+        'minio' => [
+            'driver' => 'minio',
+            'key' => env('MAXIO_KEY'),
+            'secret' => env('MAXIO_SECRET'),
+            'region' => env('MAXIO_REGION'),
+            'database' => env('MAXIO_BUCKET'),
+            'endpoint' => env('MAXIO_ENDPOINT'),
+            'use_path_style_endpoint' => env('MAXIO_USE_PATH_STYLE_ENDPOINT', true),
+        ],
+
         'maxio' => [
             'driver' => 'maxio',
             'key' => env('MAXIO_KEY'),

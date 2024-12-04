@@ -27,8 +27,16 @@ class StudentController extends Controller
 
     public function selectwhere()
     {
-        // Get students with grades equal to 11
-        $students = Student::where('grades', 11)->get();
+        // conditional select
+        // $students = Student::where('grades',11)->get();
+        // $students = Student::where('grades', 11)->where('name', 'ironman')->get();
+        // $students = Student::where('grades', 11)->orwhere('name', 'ironman')->get();
+         $students = Student::where('grades', 11)->orwhere('grades', 12)->orwhere('name', 'ironman')->get();  
+        // $students = Student::where('grades', 11)->orwhere('grades', 12)->where('name', 'ironman')->get();       
+/*          $students = Student::where(function ($query) {
+            $query->where('grades', 11)
+                  ->orWhere('grades', 12);
+        })->where('name', 'ironman')->get();  */
 
         // Convert id field to integer for each student
         $students = $students->map(function ($student) {
@@ -87,7 +95,6 @@ class StudentController extends Controller
             'email' => 'required|email',
             'grades' => 'required|integer|between:0,100',
         ]);
-        $student->setConnection('maxio');
         // dd($validated);
         $student->update($validated);
 

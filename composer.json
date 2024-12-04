@@ -7,6 +7,7 @@
     "require": {
         "php": "^8.2",
         "exaba/eloquent-maxio-driver": "^1.0",
+        "exaba/maxio": "*",
         "laravel/framework": "^11.9",
         "laravel/tinker": "^2.9"
     },
@@ -69,6 +70,10 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "repositories": {
+        "maxio": {
+            "type": "path",
+            "url": "../maaxio"
+        },
         "eloquent-maxio-driver": {
             "type": "path",
             "url": "../eloquent-maxio-driver"
