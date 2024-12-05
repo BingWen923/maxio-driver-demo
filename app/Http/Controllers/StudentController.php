@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\student;
 use GuzzleHttp\BodySummarizer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
@@ -48,6 +49,45 @@ class StudentController extends Controller
         //dd($students);
 
         return view('students.index', compact('students'));
+    }
+
+    public function showAggregates()
+    {
+
+/*         $students = Student::select('email', DB::raw('COUNT(*) as total'))
+        ->groupBy('email')
+        ->get();   */
+        // Max: Get the maximum grade
+        $result = Student::max('Grades');
+        echo "<br>The maximum grade is: " . $result . "<br>";
+        
+        // Min: Get the minimum grade
+        $result = Student::min('Grades');
+        echo "The minimum grade is: " . $result . "<br>";
+        
+        // Sum: Get the total of all grades
+        $result = Student::sum('Grades');
+        echo "The total of all grades is: " . $result . "<br>";
+        
+        // Avg: Get the average grade
+        $result = Student::avg('Grades'); // Alternatively, you can use Student::average('Grades');
+        echo "The average grade is: " . $result . "<br>";
+        
+        // Count: Get the total number of records
+        $result = Student::count();
+        echo "The total number of students is: " . $result . "<br>";
+        
+        $students = Student::all();
+         // Convert id field to integer for each student
+        $students = $students->map(function ($student) {
+            $student->id = (int) $student->id;
+            return $student;
+        });
+        // Sort by id in ascending order
+        $students = $students->sortBy('id');
+        //dd($students);
+
+        return view('students.index', compact('students')); 
     }
 
     public function create()

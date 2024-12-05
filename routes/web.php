@@ -17,4 +17,5 @@ Route::delete('students/{student}', [studentController::class, 'destroy'])->name
 
 Route::post('students/insert', [studentController::class, 'insert'])->name('students.insert');
 Route::get('students/selectwhere', [studentController::class, 'selectwhere'])->name('students.selectwhere');
+Route::get('students/showAggregates', [studentController::class, 'showAggregates'])->name('students.showAggregates');
 
