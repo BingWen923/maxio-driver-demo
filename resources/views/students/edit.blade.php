@@ -31,6 +31,11 @@
         </div>
 
         <div class="form-group">
+            <label for="college">College</label>
+            <input type="text" name="college" id="college" class="form-control" value="{{ old('college', $student->college) }}" required>
+        </div>
+
+        <div class="form-group">
             <label for="grades">Grades</label>
             <input type="number" name="grades" id="grades" class="form-control" value="{{ old('grades', $student->grades) }}" required min="0" max="100">
         </div>

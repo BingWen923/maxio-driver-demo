@@ -5,17 +5,19 @@
 @section('content')
     <h1 class="text-center mb-4">All Students</h1>
     <a href="{{ route('students.create') }}" class="btn btn-primary mb-3">Add student</a>
-    <a href="{{ route('students.selectwhere') }}" class="btn btn-primary mb-3">conditional select</a>
+    <a href="{{ route('students.selectwhere') }}" class="btn btn-primary mb-3">Conditional Select</a>
     <a href="{{ route('students.showAggregates') }}" class="btn btn-primary mb-3">Show Aggregates</a>
+    <a href="{{ route('students.showAggregates2') }}" class="btn btn-primary mb-3">Aggregates with Where</a>
+    <a href="{{ route('students.groupby') }}" class="btn btn-primary mb-3">groupby Aggregates</a>
     <form action="{{ route('students.insert') }}" method="POST">
         @csrf
-            <textarea name="InsertStudents" id="InsertStudents" class="form-control" rows="5" required>
+        <textarea name="InsertStudents" id="InsertStudents" class="form-control" rows="5" required>
 [
-    {"name": "Alice", "email": "alice@example.com", "grades": 25},
-    {"name": "Bob", "email": "bob@example.com", "grades": 30},
-    {"name": "Charlie", "email": "charlie@example.com", "grades": 35}
+    {"name": "Alice Smith", "email": "alice@example.com", "grades": 25, "college": "Science"},
+    {"name": "Bob Smith", "email": "bob@example.com", "grades": 30, "college": "Arts"},
+    {"name": "Charlie Smith", "email": "charlie@example.com", "grades": 35, "college": "Engineering"}
 ]
-            </textarea>
+        </textarea>
         <button type="submit" class="btn btn-primary">Insert Students</button>
     </form>
     <table class="table table-striped table-hover">
@@ -25,6 +27,7 @@
                 <th>Name</th>
                 <th>Email</th>
                 <th>Grades</th>
+                <th>College</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -34,6 +37,7 @@
                     <td>{{ $student->id }}</td>
                     <td>{{ $student->name }}</td>
                     <td>{{ $student->email }}</td>
+                    <td>{{ $student->college }}</td>
                     <td>{{ $student->grades }}</td>
                     <td>
                         <a href="{{ route('students.edit', $student) }}" class="btn btn-warning btn-sm">Edit</a>

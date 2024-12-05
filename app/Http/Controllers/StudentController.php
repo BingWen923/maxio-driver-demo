@@ -53,10 +53,6 @@ class StudentController extends Controller
 
     public function showAggregates()
     {
-
-/*         $students = Student::select('email', DB::raw('COUNT(*) as total'))
-        ->groupBy('email')
-        ->get();   */
         // Max: Get the maximum grade
         $result = Student::max('Grades');
         echo "<br>The maximum grade is: " . $result . "<br>";
@@ -90,6 +86,61 @@ class StudentController extends Controller
         return view('students.index', compact('students')); 
     }
 
+    public function showAggregates2()
+    {
+        // Max: Get the maximum grade for students with name like '%Smith%'
+        $result = Student::where('name', 'like', '%Smith%')->max('Grades');
+        echo "<br>The maximum grade for students with name like '%Smith%' is: " . $result . "<br>";
+        
+        // Min: Get the minimum grade for students with name like '%Smith%'
+        $result = Student::where('name', 'like', '%Smith%')->min('Grades');
+        echo "The minimum grade for students with name like '%Smith%' is: " . $result . "<br>";
+        
+        // Sum: Get the total of all grades for students with name like '%Smith%'
+        $result = Student::where('name', 'like', '%Smith%')->sum('Grades');
+        echo "The total of all grades for students with name like '%Smith%' is: " . $result . "<br>";
+        
+        // Avg: Get the average grade for students with name like '%Smith%'
+        $result = Student::where('name', 'like', '%Smith%')->avg('Grades');
+        echo "The average grade for students with name like '%Smith%' is: " . $result . "<br>";
+        
+        // Count: Get the total number of records for students with name like '%Smith%'
+        $result = Student::where('name', 'like', '%Smith%')->count();
+        echo "The total number of students with name like '%Smith%' is: " . $result . "<br>";
+        
+        $students = Student::all();
+        
+        // Convert id field to integer for each student
+        $students = $students->map(function ($student) {
+            $student->id = (int) $student->id;
+            return $student;
+        });
+    
+        // Sort by id in ascending order
+        $students = $students->sortBy('id');
+    
+        return view('students.index', compact('students')); 
+    }
+
+    public function groupby()
+    {
+        echo "not ready<br>";
+        
+        $students = Student::all();
+        
+        // Convert id field to integer for each student
+        $students = $students->map(function ($student) {
+            $student->id = (int) $student->id;
+            return $student;
+        });
+    
+        // Sort by id in ascending order
+        $students = $students->sortBy('id');
+    
+        return view('students.index', compact('students')); 
+    }
+    
+
     public function create()
     {
         // Show create student form
@@ -102,6 +153,7 @@ class StudentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email',
+            'college'=> 'required|string|max:255',
             'grades' => 'required|integer|between:0,100',
         ]);
 
@@ -133,6 +185,7 @@ class StudentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email',
+            'college'=> 'required|string|max:255',
             'grades' => 'required|integer|between:0,100',
         ]);
         // dd($validated);

@@ -12,9 +12,8 @@ class Student extends Model
 
     protected $table = 'table_student';
 
-    protected $fillable = ['name', 'email', 'grades'];
+    protected $fillable = ['name', 'email', 'college','grades'];
 
     protected $keyType = 'int';
     public $incrementing = true;
-
 }
