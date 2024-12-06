@@ -2,13 +2,60 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\student;
+use App\Models\Student;
+use App\Models\Phones;
 use GuzzleHttp\BodySummarizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
+    public function relationships1to1()
+    {
+        // Create a student
+        $student = Student::create([
+            'name' => 'Alice',
+            'email' => 'alice@example.com',
+            'college' => 'Science',
+            'grades' => 85
+        ]);
+
+        // Create a phone record associated with the student
+        $student->phone()->create([
+            'cellphone' => '12-456-7890',
+            'home' => '55-555-5555',
+            'company' => '55-555-1234'
+        ]);
+
+        return redirect()->route('students.relationships');
+    }
+
+    public function relationships()
+    {
+        $OneToOneCreate = <<<EOL
+        // Create a student
+        \$student = Student::create([
+            'name' => 'Alice',
+            'email' => 'alice@example.com',
+            'college' => 'Science',
+            'grades' => 85
+        ]);
+
+        // Create a phone record associated with the student
+        \$student->phone()->create([
+            'cellphone' => '12-456-7890',
+            'home' => '55-555-5555',
+            'company' => '55-555-1234'
+        ]);
+        EOL;
+
+        // List all records
+        $students = Student::all();
+        $phones = Phones::all();
+    
+        return view('students.relationships', compact('students', 'phones','OneToOneCreate'));
+    }
+
     public function index()
     {
         // List all students

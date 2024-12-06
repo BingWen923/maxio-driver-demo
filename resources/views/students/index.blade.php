@@ -20,6 +20,7 @@
         </textarea>
         <button type="submit" class="btn btn-primary">Insert Students</button>
     </form>
+    <a href="{{ route('students.relationships') }}" class="btn btn-primary mb-3">relationships demo</a>
     <table class="table table-striped table-hover">
         <thead class="table-dark">
             <tr>

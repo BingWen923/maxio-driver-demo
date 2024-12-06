@@ -20,4 +20,5 @@ Route::get('students/selectwhere', [studentController::class, 'selectwhere'])->n
 Route::get('students/showAggregates', [studentController::class, 'showAggregates'])->name('students.showAggregates');
 Route::get('students/showAggregates2', [studentController::class, 'showAggregates2'])->name('students.showAggregates2');
 Route::get('students/groupby', [studentController::class, 'groupby'])->name('students.groupby');
-
+Route::get('students/relationships', [studentController::class, 'relationships'])->name('students.relationships');
+Route::get('students/relationships/1to1', [studentController::class, 'relationships1to1'])->name('students.relationships1to1');
