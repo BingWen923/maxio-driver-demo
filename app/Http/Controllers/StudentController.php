@@ -124,20 +124,22 @@ class StudentController extends Controller
 
     public function groupby()
     {
-        echo "not ready<br>";
-        
+       
         $students = Student::all();
+
+        $groupedStudents = $students -> groupBy('college');
         
-        // Convert id field to integer for each student
-        $students = $students->map(function ($student) {
-            $student->id = (int) $student->id;
-            return $student;
+        $results = $groupedStudents->map(function ($group, $college) {
+            return [
+                'status' => $college,
+                'max_grade' => $group->max('grades'),
+                'min_grade' => $group->min('grades'),
+                'average_grade' => $group->avg('grades'),
+                'total_students' => $group->count(),
+            ];
         });
     
-        // Sort by id in ascending order
-        $students = $students->sortBy('id');
-    
-        return view('students.index', compact('students')); 
+        return view('students.groupby', compact('results')); 
     }
     
 
