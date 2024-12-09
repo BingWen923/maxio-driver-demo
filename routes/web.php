@@ -22,3 +22,4 @@ Route::get('students/showAggregates2', [studentController::class, 'showAggregate
 Route::get('students/groupby', [studentController::class, 'groupby'])->name('students.groupby');
 Route::get('students/relationships', [studentController::class, 'relationships'])->name('students.relationships');
 Route::get('students/relationships/1to1', [studentController::class, 'relationships1to1'])->name('students.relationships1to1');
+Route::get('students/relationships/1tomany', [studentController::class, 'relationships1tomany'])->name('students.relationships1tomany');

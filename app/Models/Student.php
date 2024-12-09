@@ -17,4 +17,9 @@ class Student extends Model
     {
         return $this->hasOne(Phones::class, 'student_id', 'id'); // 'student_id' is the foreign key in the phones table
     }
+
+    public function attendence()
+    {
+        return $this->hasMany(Attendence::class, 'student_id', 'id'); // 'student_id' is the foreign key in the Attendence table
+    }
 }

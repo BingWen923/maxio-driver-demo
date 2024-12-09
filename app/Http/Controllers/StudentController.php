@@ -4,15 +4,59 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use App\Models\Phones;
+use App\Models\Attendence;
 use GuzzleHttp\BodySummarizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
+    public function relationships1tomany()
+    {
+        // Assuming we have a student record in the database
+        //$student = Student::skip(1)->first();
+        $atts = Student::withCount('attendence')->first();
+        dd($atts);
+
+         // Create single attendance records using the relationship
+        $student->attendence()->create([
+            'time' => now(),
+            'course' => 'Math 101',
+            'status' => 'Present'
+        ]);
+
+        $student->attendence()->create([
+            'time' => now()->subDay(),
+            'course' => 'Science 202',
+            'status' => 'Absent'
+        ]);
+
+        $student->attendence()->create([
+            'time' => now()->subDays(2),
+            'course' => 'Literature 303',
+            'status' => 'Present'
+        ]);
+
+        // Create multiple attendance records at once
+        $student->attendence()->createMany([
+            [
+                'time' => now()->subDays(3),
+                'course' => 'History 404',
+                'status' => 'Present'
+            ],
+            [
+                'time' => now()->subDays(4),
+                'course' => 'Art 505',
+                'status' => 'Absent'
+            ]
+        ]); 
+
+        return redirect()->route('students.relationships');        
+    }
+    
     public function relationships1to1()
     {
-        // Create a student
+        /*         // Create a student
         $student = Student::create([
             'name' => 'Alice',
             'email' => 'alice@example.com',
@@ -25,14 +69,38 @@ class StudentController extends Controller
             'cellphone' => '12-456-7890',
             'home' => '55-555-5555',
             'company' => '55-555-1234'
-        ]);
+        ]); */
+        // Get all students
+        $allStudents = Student::with('phone')->get();
+        //$allStudents = Student::all();
+
+        // Filter out students that do not have a phone record
+        // Assuming phone() returns a null or empty value when no phone record is present
+        $studentsWithoutPhone = $allStudents->filter(function ($std) {
+            return $std->phone === null;
+        });
+
+        foreach ($studentsWithoutPhone as $std) {
+            // Generate random parts of the phone numbers
+            $random1 = rand(1, 99) . '-' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT) . '-' . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+            $random2 = rand(1, 99) . '-' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT) . '-' . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+            $random3 = rand(1, 99) . '-' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT) . '-' . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+
+
+            // Create a phone record for the student
+            $std->phone()->create([
+                'cellphone' => $random1,
+                'home' => $random2,
+                'company' => $random3
+            ]);
+        }
 
         return redirect()->route('students.relationships');
     }
 
     public function relationships()
     {
-        $OneToOneCreate = <<<EOL
+        $OneToOne = <<<EOL
         // Create a student
         \$student = Student::create([
             'name' => 'Alice',
@@ -49,11 +117,16 @@ class StudentController extends Controller
         ]);
         EOL;
 
+        $OneToMany = <<<EOL
+        Code not available
+        EOL;
+
         // List all records
         $students = Student::all();
         $phones = Phones::all();
+        $atts = Attendence::all();
     
-        return view('students.relationships', compact('students', 'phones','OneToOneCreate'));
+        return view('students.relationships', compact('students', 'phones','atts','OneToOne','OneToMany'));
     }
 
     public function index()
