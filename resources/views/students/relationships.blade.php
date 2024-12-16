@@ -68,78 +68,25 @@
     </div>
     <a href="{{ route('students.relationships1to1') }}" class="btn btn-primary mb-3" onmouseover="show_demo_code({{ json_encode($OneToOne) }})">one to one create</a>
     <a href="{{ route('students.relationships1tomany') }}" class="btn btn-primary mb-3" onmouseover="show_demo_code({{ json_encode($OneToMany) }})">One to many</a>
+    <a href="{{ route('students.relationshipsmanytomany') }}" class="btn btn-primary mb-3" onmouseover="show_demo_code({{ json_encode($ManyToMany) }})">Many to many</a>
 </div>
 
+
+
 <h1>Students</h1>
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>College</th>
-            <th>Grades</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($students as $student)
-        <tr>
-            <td>{{ $student->id }}</td>
-            <td>{{ $student->name }}</td>
-            <td>{{ $student->email }}</td>
-            <td>{{ $student->college }}</td>
-            <td>{{ $student->grades }}</td>
-        </tr>
-        @endforeach
-    </tbody>
-</table>
+{!! $tableStudents !!}
+
 
 <h1>Phones</h1>
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Cellphone</th>
-            <th>Home</th>
-            <th>Company</th>
-            <th>Student ID</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($phones as $phone)
-        <tr>
-            <td>{{ $phone->id }}</td>
-            <td>{{ $phone->cellphone }}</td>
-            <td>{{ $phone->home }}</td>
-            <td>{{ $phone->company }}</td>
-            <td>{{ $phone->student_id }}</td>
-        </tr>
-        @endforeach
-    </tbody>
-</table>
+{!! $tablePhones !!}
 
 <h1>Attendence</h1>
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Time</th>
-            <th>Course</th>
-            <th>Status</th>
-            <th>Student ID</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($atts as $attendence)
-        <tr>
-            <td>{{ $attendence->id }}</td>
-            <td>{{ $attendence->time }}</td>
-            <td>{{ $attendence->course }}</td>
-            <td>{{ $attendence->status }}</td>
-            <td>{{ $attendence->student_id }}</td>
-        </tr>
-        @endforeach
-    </tbody>
-</table>
+{!! $tableAttendence !!}
+
+<h1>Papers</h1>
+{!! $tablePapers !!}
+
+<h1>intermediate table paper-student</h1>
+{!! $tablePaperStudent !!}
 
 @endsection

@@ -3,18 +3,61 @@
 namespace App\Http\Controllers;
 
 use App\Models\Student;
-use App\Models\Phones;
+use App\Models\Phone;
 use App\Models\Attendence;
+use App\Models\Paper;
 use GuzzleHttp\BodySummarizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use App\Helpers\HtmlGenerateHelper;
+
 class StudentController extends Controller
 {
+    public function relationshipsmanytomany()
+    {
+        $student1 = Student::whereHas('papers', function($query) {
+            $query->where('code', 'COMPX575');
+        })->get();
+        dump($student1);
+        $student2 = Student::withCount('papers')->get();
+        dd($student2);
+        
+/*         $student1 = Student::first();
+        $student2 = Student::skip(1)->first();
+
+        $paper1 = Paper::create([
+            'code' => 'COMPX575',
+            'title' => 'Programming Tools and Techniques'
+        ]);
+
+        $paper2 = Paper::create([
+            'code' => 'CSMAX596',
+            'title' => 'Computer Science Internship'
+        ]);
+
+        $paper3 = Paper::create([
+            'code' => 'COMPX546',
+            'title' => 'Graph Theory'
+        ]);
+
+        $paper4 = Paper::create([
+            'code' => 'COMPX532',
+            'title' => 'Information Visualisation'
+        ]);
+
+        $student1->papers()->attach([$paper1->id, $paper2->id]);
+        $student2->papers()->attach([$paper1->id, $paper3->id]);
+        $paper4->students()->attach([$student1->id,$student2->id]); */
+
+        return redirect()->route('students.relationships');        
+    }
+
     public function relationships1tomany()
     {
         // Assuming we have a student record in the database
         //$student = Student::skip(1)->first();
+
         $atts = Student::withCount('attendence')->first();
         dd($atts);
 
@@ -29,12 +72,6 @@ class StudentController extends Controller
             'time' => now()->subDay(),
             'course' => 'Science 202',
             'status' => 'Absent'
-        ]);
-
-        $student->attendence()->create([
-            'time' => now()->subDays(2),
-            'course' => 'Literature 303',
-            'status' => 'Present'
         ]);
 
         // Create multiple attendance records at once
@@ -118,15 +155,77 @@ class StudentController extends Controller
         EOL;
 
         $OneToMany = <<<EOL
-        Code not available
+         // Create single attendance records using the relationship
+        \$student->attendence()->create([
+            'time' => now(),
+            'course' => 'Math 101',
+            'status' => 'Present'
+        ]);
+
+        \$student->attendence()->create([
+            'time' => now()->subDay(),
+            'course' => 'Science 202',
+            'status' => 'Absent'
+        ]);
+
+        // Create multiple attendance records at once
+        \$student->attendence()->createMany([
+            [
+                'time' => now()->subDays(3),
+                'course' => 'History 404',
+                'status' => 'Present'
+            ],
+            [
+                'time' => now()->subDays(4),
+                'course' => 'Art 505',
+                'status' => 'Absent'
+            ]
+        ]); 
+        EOL;
+
+        $ManyToMany = <<<EOL
+        \$student1 = Student::first();
+        \$student2 = Student::skip(1)->first();
+
+        \$paper1 = Paper::create([
+            'code' => 'COMPX575',
+            'title' => 'Programming Tools and Techniques'
+        ]);
+
+        \$paper2 = Paper::create([
+            'code' => 'CSMAX596',
+            'title' => 'Computer Science Internship'
+        ]);
+
+        \$paper3 = Paper::create([
+            'code' => 'COMPX546',
+            'title' => 'Graph Theory'
+        ]);
+
+        \$paper4 = Paper::create([
+            'code' => 'COMPX532',
+            'title' => 'Information Visualisation'
+        ]);
+
+        \$student1->papers()->attach([\$paper1->id, \$paper2->id]);
+        \$student2->papers()->attach([\$paper1->id, \$paper3->id]);
+        \$paper4->students()->attach([\$student1->id,\$student2->id]);
+
         EOL;
 
         // List all records
         $students = Student::all();
-        $phones = Phones::all();
+        $tableStudents = HtmlGenerateHelper::generateTable($students);
+        $phones = Phone::all();
+        $tablePhones = HtmlGenerateHelper::generateTable($phones);
         $atts = Attendence::all();
+        $tableAttendence = HtmlGenerateHelper::generateTable($atts);
+        $papers = Paper::all();
+        $tablePapers = HtmlGenerateHelper::generateTable($papers);
+        $paper_student = DB::table('table_paper_student')->get(); // load the intermediate table
+        $tablePaperStudent = HtmlGenerateHelper::generateTable($paper_student);
     
-        return view('students.relationships', compact('students', 'phones','atts','OneToOne','OneToMany'));
+        return view('students.relationships', compact('tableStudents', 'tablePhones', 'tableAttendence', 'tablePapers', 'tablePaperStudent', 'OneToOne', 'OneToMany','ManyToMany'));
     }
 
     public function index()
@@ -134,14 +233,6 @@ class StudentController extends Controller
         // List all students
         $students = Student::all();
 
-        // Convert id field to integer for each student
-        $students = $students->map(function ($student) {
-            $student->id = (int) $student->id;
-            return $student;
-        });
-
-        // Sort by id in ascending order
-        $students = $students->sortBy('id');
         //dd($students);
         return view('students.index', compact('students'));
     }
