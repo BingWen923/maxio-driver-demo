@@ -38,8 +38,8 @@
                     <td>{{ $student->id }}</td>
                     <td>{{ $student->name }}</td>
                     <td>{{ $student->email }}</td>
-                    <td>{{ $student->college }}</td>
                     <td>{{ $student->grades }}</td>
+                    <td>{{ $student->college }}</td>
                     <td>
                         <a href="{{ route('students.edit', $student) }}" class="btn btn-warning btn-sm">Edit</a>
                         <form action="{{ route('students.destroy', $student) }}" method="POST" style="display:inline;">

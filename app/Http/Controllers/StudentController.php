@@ -265,25 +265,25 @@ class StudentController extends Controller
     public function showAggregates()
     {
         // Max: Get the maximum grade
-        $result = Student::max('Grades');
+        $result = Student::max('grades');
         echo "<br>The maximum grade is: " . $result . "<br>";
-        
+ 
         // Min: Get the minimum grade
-        $result = Student::min('Grades');
+        $result = Student::min('grades');
         echo "The minimum grade is: " . $result . "<br>";
         
         // Sum: Get the total of all grades
-        $result = Student::sum('Grades');
+        $result = Student::sum('grades');
         echo "The total of all grades is: " . $result . "<br>";
         
         // Avg: Get the average grade
-        $result = Student::avg('Grades'); // Alternatively, you can use Student::average('Grades');
+        $result = Student::avg('grades'); // Alternatively, you can use Student::average('Grades');
         echo "The average grade is: " . $result . "<br>";
         
         // Count: Get the total number of records
         $result = Student::count();
         echo "The total number of students is: " . $result . "<br>";
-        
+
         $students = Student::all();
          // Convert id field to integer for each student
         $students = $students->map(function ($student) {
@@ -342,7 +342,7 @@ class StudentController extends Controller
         
         $results = $groupedStudents->map(function ($group, $college) {
             return [
-                'status' => $college,
+                'college' => $college,
                 'max_grade' => $group->max('grades'),
                 'min_grade' => $group->min('grades'),
                 'average_grade' => $group->avg('grades'),
