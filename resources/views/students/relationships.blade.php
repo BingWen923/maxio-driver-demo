@@ -89,4 +89,7 @@
 <h1>intermediate table paper-student</h1>
 {!! $tablePaperStudent !!}
 
+<h1>student id card (HasOneThrough)</h1>
+{!! $tablesic !!}
+
 @endsection

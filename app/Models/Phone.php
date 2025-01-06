@@ -18,4 +18,9 @@ class Phone extends Model
     {
         return $this->belongsTo(Student::class, 'student_id', 'id'); // 'student_id' references the id in the students table
     }
+
+    public function idcard()
+    {
+        return $this->hasOne(StudentIdCard::class, 'phone_id', 'id'); 
+    }
 }

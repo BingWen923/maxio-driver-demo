@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Student extends Model
 {
@@ -28,5 +29,10 @@ class Student extends Model
     {
         // assuming there's a 'table_paper_student' pivot table with 'student_id' and 'paper_id' fields
         return $this->belongsToMany(Paper::class, 'table_paper_student', 'student_id', 'paper_id');
+    }
+
+    public function phone_idcard():HasOneThrough
+    {
+        return $this->hasOneThrough(StudentIdCard::class, Phone::class);
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Student;
 use App\Models\Phone;
 use App\Models\Attendence;
 use App\Models\Paper;
+use App\Models\StudentIdCard;
 use GuzzleHttp\BodySummarizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,12 +17,26 @@ class StudentController extends Controller
 {
     public function relationshipsmanytomany()
     {
-        $student1 = Student::whereHas('papers', function($query) {
+        // pivot ordering
+        $s1 = Student::find(1);
+        $papers = $s1->papers()
+                  ->orderByPivot('id', 'desc') 
+                  ->get();
+        dd($papers); 
+
+/*         // pivot filtering
+        $s1 = Student::find(1);
+        $papers = $s1->papers()
+                  ->wherePivot('id', 1) // Filter on the pivot table column
+                  ->get();
+        dd($papers); */
+
+/*         $student1 = Student::whereHas('papers', function($query) {
             $query->where('code', 'COMPX575');
         })->get();
         dump($student1);
         $student2 = Student::withCount('papers')->get();
-        dd($student2);
+        dd($student2); */
         
 /*         $student1 = Student::first();
         $student2 = Student::skip(1)->first();
@@ -93,6 +108,24 @@ class StudentController extends Controller
     
     public function relationships1to1()
     {
+/*         $card = StudentIdCard::create([
+            'idnumber' => '1600001',
+            'issuedate' => '2024-02-23',
+            'expiredate' => '2025-03-31',
+            'phone_id' => 1, 
+        ]); */
+        $r1 = Student::find(1);
+        dump($r1);
+        
+        $r2 = $r1->phone()->first(); // Fetch related Phone
+        dump($r2);
+        
+        $r3 = $r2->idcard; // Use property-like access to fetch the related StudentIdCard
+        dump($r3);
+        
+        $h = Student::find(1)->phone_idcard()->toSql(); 
+        
+        dd($h); // Final output
         /*         // Create a student
         $student = Student::create([
             'name' => 'Alice',
@@ -224,8 +257,10 @@ class StudentController extends Controller
         $tablePapers = HtmlGenerateHelper::generateTable($papers);
         $paper_student = DB::table('table_paper_student')->get(); // load the intermediate table
         $tablePaperStudent = HtmlGenerateHelper::generateTable($paper_student);
+        $sic = StudentIdCard::all();
+        $tablesic = HtmlGenerateHelper::generateTable($sic);
     
-        return view('students.relationships', compact('tableStudents', 'tablePhones', 'tableAttendence', 'tablePapers', 'tablePaperStudent', 'OneToOne', 'OneToMany','ManyToMany'));
+        return view('students.relationships', compact('tableStudents', 'tablePhones', 'tableAttendence', 'tablePapers', 'tablePaperStudent','tablesic', 'OneToOne', 'OneToMany','ManyToMany'));
     }
 
     public function index()
