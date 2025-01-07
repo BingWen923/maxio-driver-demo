@@ -19,9 +19,9 @@ class StudentController extends Controller
     {
         // pivot ordering
         $s1 = Student::find(1);
-        $papers = $s1->papers()
-                  ->orderByPivot('id', 'desc') 
-                  ->get();
+        $papers = $s1->papers()->get();
+   //               ->orderByPivot('id', 'desc') 
+   //               ->get();
         dd($papers); 
 
 /*         // pivot filtering
@@ -70,11 +70,22 @@ class StudentController extends Controller
 
     public function relationships1tomany()
     {
+        // Querying Relationship Existence
+        $s1 = Student::has('attendence')->get();
+        dump($s1);
+        $s2 = Student::has('attendence','>=',3)->get();        
+        dd($s2);
+
+        // Querying Relations
+        $s1 = Student::find(1);
+        $a1 = $s1->attendence()->where('status','Present')->get();
+        dd($a1);
+
         // Assuming we have a student record in the database
         //$student = Student::skip(1)->first();
 
-        $atts = Student::withCount('attendence')->first();
-        dd($atts);
+/*         $atts = Student::withCount('attendence')->first();
+        dd($atts); */
 
          // Create single attendance records using the relationship
         $student->attendence()->create([
