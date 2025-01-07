@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use App\Models\Phone;
-use App\Models\Attendence;
+use App\Models\Attendance;
 use App\Models\Paper;
 use App\Models\StudentIdCard;
 use GuzzleHttp\BodySummarizer;
@@ -70,6 +70,23 @@ class StudentController extends Controller
 
     public function relationships1tomany()
     {
+        // Eager Loading
+        $s1 = Student::with('attendance')->get();
+        dd('Eager Loaded Students:', $s1);
+        foreach ($s1 as $student) {
+            // Check if attendance relationship is loaded
+            dump("Is 'attendance' relationship loaded for Student {$student->id}:", $student->relationLoaded('attendance'));
+        
+            // Check the data inside the attendance relationship
+            dump("Attendance Records for Student {$student->id} ({$student->name}):", $student->attendance);
+        
+            foreach ($student->attendance as $record) {
+                dump('Attendance Record Details:', $record);
+            }
+        }
+        dd('Eager Loading test is over');
+        
+        
         // Querying Relationship Existence
         $s1 = Student::has('attendence')->get();
         dump($s1);
@@ -88,20 +105,20 @@ class StudentController extends Controller
         dd($atts); */
 
          // Create single attendance records using the relationship
-        $student->attendence()->create([
+        $student->attendance()->create([
             'time' => now(),
             'course' => 'Math 101',
             'status' => 'Present'
         ]);
 
-        $student->attendence()->create([
+        $student->attendance()->create([
             'time' => now()->subDay(),
             'course' => 'Science 202',
             'status' => 'Absent'
         ]);
 
         // Create multiple attendance records at once
-        $student->attendence()->createMany([
+        $student->attendance()->createMany([
             [
                 'time' => now()->subDays(3),
                 'course' => 'History 404',
@@ -262,8 +279,8 @@ class StudentController extends Controller
         $tableStudents = HtmlGenerateHelper::generateTable($students);
         $phones = Phone::all();
         $tablePhones = HtmlGenerateHelper::generateTable($phones);
-        $atts = Attendence::all();
-        $tableAttendence = HtmlGenerateHelper::generateTable($atts);
+        $atts = Attendance::all();
+        $tableAttendance = HtmlGenerateHelper::generateTable($atts);
         $papers = Paper::all();
         $tablePapers = HtmlGenerateHelper::generateTable($papers);
         $paper_student = DB::table('table_paper_student')->get(); // load the intermediate table
@@ -271,7 +288,7 @@ class StudentController extends Controller
         $sic = StudentIdCard::all();
         $tablesic = HtmlGenerateHelper::generateTable($sic);
     
-        return view('students.relationships', compact('tableStudents', 'tablePhones', 'tableAttendence', 'tablePapers', 'tablePaperStudent','tablesic', 'OneToOne', 'OneToMany','ManyToMany'));
+        return view('students.relationships', compact('tableStudents', 'tablePhones', 'tableAttendance', 'tablePapers', 'tablePaperStudent','tablesic', 'OneToOne', 'OneToMany','ManyToMany'));
     }
 
     public function index()

@@ -80,8 +80,8 @@
 <h1>Phones</h1>
 {!! $tablePhones !!}
 
-<h1>Attendence</h1>
-{!! $tableAttendence !!}
+<h1>Attendance</h1>
+{!! $tableAttendance !!}
 
 <h1>Papers</h1>
 {!! $tablePapers !!}

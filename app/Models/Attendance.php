@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
-class Attendence extends Model
+class Attendance extends Model
 {
     // attendence record for a student
     protected $connection = 'minio';

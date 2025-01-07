@@ -27,16 +27,16 @@ class RelationshipTest extends TestCase
     {
         try {
             $student = Student::find(1);
-            $latestAtt = $student->hasOne(Attendence::class)->latestOfMany()->first();
-            $oldestAtt = $student->hasOne(Attendence::class)->oldestOfMany()->first();
-            $att = $student->hasOne(Attendence::class)->ofMany('id', 'max')->first();
+            $latestAtt = $student->hasOne(Attendance::class)->latestOfMany()->first();
+            $oldestAtt = $student->hasOne(Attendance::class)->oldestOfMany()->first();
+            $att = $student->hasOne(Attendance::class)->ofMany('id', 'max')->first();
 
             echo "\n*********************latest ID: " . ($latestAtt?->id ?? 'N/A');
             echo "\n*********************oldest ID: " . ($oldestAtt?->id ?? 'N/A');
             echo "\n*********************max ID: " . ($att?->id ?? 'N/A');
 
-            $maxid = Attendence::where('student_id', '1')->max('id');
-            $minid = Attendence::where('student_id', '1')->min('id');
+            $maxid = Attendance::where('student_id', '1')->max('id');
+            $minid = Attendance::where('student_id', '1')->min('id');
             echo "\n*********Calculated max ID: $maxid and min ID: $minid\n";
 
             $this->assertNotNull($latestAtt, "Latest attendance should not be null.");
