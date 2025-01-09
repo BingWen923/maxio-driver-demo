@@ -5,6 +5,8 @@ namespace Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use App\Models\Student;
 use App\Models\Attendance;
+use App\Models\Paper;
+use Illuminate\Support\Facades\DB;
 
 class RelationshipTest extends TestCase
 {
@@ -84,4 +86,428 @@ class RelationshipTest extends TestCase
         }
     }
     
+    public function testManyToMany_retrieving(): void
+    {
+        /*
+            Retrieving Intermediate Table Columns
+            Filtering Queries via Intermediate Table Columns
+            Ordering Queries via Intermediate Table Columns
+            Defining Custom Intermediate Table Models
+        */
+        echo "\n\n********************* test many to many relationship - retrieving  *********************\n";
+    
+        try {
+            $s1 = Student::find(1);
+            $papers = $s1->papers;
+            $this->assertFalse($papers->isEmpty(), "Student(id:1)'s papers should not be empty.");
+
+            foreach ($papers as $paper) {
+                echo "\n**pivot ID: " . ($paper->pivot->id ?? 'N/A').
+                    "\n**student ID: " . ($paper->pivot->student_id ?? 'N/A').
+                    "\n**paper ID: " . ($paper->pivot->paper_id ?? 'N/A').
+                    "******\n";
+            }
+
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testManyToMany_filtering(): void
+    {
+        /*
+            Retrieving Intermediate Table Columns
+            Filtering Queries via Intermediate Table Columns
+            Ordering Queries via Intermediate Table Columns
+            Defining Custom Intermediate Table Models
+        */
+        echo "\n\n********************* test many to many relationship - Filtering  *********************\n";
+    
+        try {
+            $s1 = Student::find(1);
+            $papers = $s1->papers()
+                        ->wherePivot('paper_id', 1) // Filter on the pivot table column
+                        ->get();
+            $this->assertFalse($papers->isEmpty(), "Student(id:1)'s paper(id:1) should not be empty.");
+
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testManyToMany_ordering(): void
+    {
+        /*
+            Retrieving Intermediate Table Columns
+            Filtering Queries via Intermediate Table Columns
+            Ordering Queries via Intermediate Table Columns
+            Defining Custom Intermediate Table Models
+        */
+        echo "\n\n********************* test many to many relationship - Ordering  *********************\n";
+    
+        try {
+            $s1 = Student::find(1);
+            $papers = $s1->papers()
+                        ->orderByPivot('id', 'desc')
+                        ->get();
+            $this->assertFalse($papers->isEmpty(), "Student(id:1)'s papers after ordering should not be empty.");
+
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testQueryingRelationshipExistence(): void
+    {
+        // Querying relationship and querying relationship existence
+        echo "\n\n********************* test 1 to many Querying Relationship Existence  *********************\n";
+    
+        try {
+            // Querying Relations
+            $s1 = Student::find(1);
+            $a1 = $s1->attendance()->where('status','Present')->get();
+            echo "\n** student(1) attendance records with status=Present count: ".$a1->count();
+            // dump($a1);
+            $this->assertGreaterThanOrEqual(1, $a1->count(), "Student(id:1)'s attendance records with status 'Present' should not be empty.");
+
+            $s2 = Student::has('attendance')->get();
+            echo "\n** Students who have attendance records count: ".$s2->count();
+            $this->assertGreaterThanOrEqual(1, $s2->count(), "No students have attendance records. Check the test data.");
+
+            $s3 = Student::has('attendance','>=',3)->get();
+            echo "\n** Students who have attendance records with condition count: ".$s3->count();
+            $this->assertGreaterThanOrEqual(1, $s3->count(), "No students have attendance records with condition. Check the test data.");
+
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testQueryingRelationshipAbsence(): void
+    {
+        echo "\n\n********************* test 1 to many Querying Relationship Absence *********************\n";
+    
+        try {
+            $s2 = Student::doesntHave('attendance')->get();
+            echo "\n** Students who do NOT have attendance records count: ".$s2->count();
+            $this->assertGreaterThanOrEqual(1, $s2->count(), "Expected students without attendance records. Check the test data.");
+
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testAggregatingRelatedModels_Count(): void
+    {
+        echo "\n\n********************* test 1 to many Aggregating Related Models - count *********************\n";
+    
+        try {
+            echo "\n\n****** withCount() *******";
+            $s1 = Student::withCount('attendance')->first();
+            echo "\n** Student Record (JSON): " . $s1->toJson(JSON_PRETTY_PRINT);
+            $this->assertGreaterThanOrEqual(1, $s1->attendance_count, "Expected the student's attendance_count to be greater than or equal to 1.");
+
+            echo "\n\n****** loadCount() *******";
+            $s1 = Student::find(1);
+            $c1 = $s1->getAttribute('attendance_count') ?? 'N/A';
+            echo "\n** Before loadCount - attendance_count: $c1";
+            $s1->loadCount('attendance');
+            $c2 = $s1->attendance_count;
+            echo "\n** After loadCount - attendance_count: $c2";
+            //echo "\n** Student Record (JSON): " . $s1->toJson(JSON_PRETTY_PRINT);
+            $this->assertGreaterThanOrEqual(1, $c2, "Expected the student's attendance_count to be greater than or equal to 1.");
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testAggregatingRelatedModels_others(): void
+    {
+        echo "\n\n********************* test 1 to many Aggregating Related Models *********************\n";
+        echo "**** sum, min,max, avg ****\n";
+    
+        try {
+            echo "\n\n****** withSum() *******";
+            $s1 = Student::withSum('attendance','id')->first();
+            echo "\n** Student Record (JSON): " . $s1->toJson(JSON_PRETTY_PRINT);
+            $this->assertGreaterThanOrEqual(1, $s1->attendance_sum_id, "Expected withSum() result to be greater than or equal to 1.");
+
+            echo "\n\n****** withMin() *******";
+            $s1 = Student::withMin('attendance','id')->first();
+            echo "\n** Student Record (JSON): " . $s1->toJson(JSON_PRETTY_PRINT);
+            $this->assertGreaterThanOrEqual(1, $s1->attendance_min_id, "Expected withMin() result to be greater than or equal to 1.");
+
+            echo "\n\n****** withMax() *******";
+            $s1 = Student::withMax('attendance','id')->first();
+            echo "\n** Student Record (JSON): " . $s1->toJson(JSON_PRETTY_PRINT);
+            $this->assertGreaterThanOrEqual(1, $s1->attendance_max_id, "Expected withMax() result to be greater than or equal to 1.");
+
+            echo "\n\n****** withAvg() *******";
+            $s1 = Student::withAvg('attendance','id')->first();
+            echo "\n** Student Record (JSON): " . $s1->toJson(JSON_PRETTY_PRINT);
+            $this->assertGreaterThanOrEqual(1, $s1->attendance_avg_id, "Expected withAvg() result to be greater than or equal to 1.");
+
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testEagerLoading(): void
+    {
+        echo "\n\n********************* test 1 to many Eager Loading *********************\n";
+    
+        try {
+            // Eager Loading
+            $s1 = Student::with('attendance')->get();
+            dump($s1);
+            echo "\n** Students eager loading count: ".$s1->count();
+            $this->assertGreaterThanOrEqual(1, $s1->count(), "Expected Students eager loading counts>=1. Check the test data.");
+
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testLazyEagerLoading(): void
+    {
+        echo "\n\n********************* Test 1-to-Many Lazy Eager Loading *********************\n";
+
+        try {
+            // Retrieve students without loading the attendance relationship
+            $students = Student::all();
+            echo "\n** Students count before lazy eager loading: " . $students->count();
+            $this->assertGreaterThanOrEqual(1, $students->count(), "Expected Students count >= 1 before lazy eager loading. Check the test data.");
+
+            // Lazy load the attendance relationship
+            $students->load('attendance');
+            dump($students);
+
+            // Verify that the attendance relationship has been loaded
+            foreach ($students as $student) {
+                echo "\n** Student ID: {$student->id}, Attendance Count: " . $student->attendance->count();
+            }
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testRelationshipSave(): void
+    {
+        echo "\n\n********************* Test 1-to-Many Save() *********************\n";
+
+        try {
+            $a1 = new Attendance(['course' => 'Test course 555','status'=>'Present','time'=>'2025-1-1']);
+            $s1 = Student::find(2);
+            $this->assertNotNull($s1, "Student with ID 2 does not exist. Check the test data.");
+
+            $a2 = $s1->Attendance()->save($a1);
+            echo "inserted record with id: ".$a2->id;
+
+            $a3 = Attendance::find($a2->id);
+            $this->assertNotNull($a3, "Attendance record with ID {$a2->id} could not be found after insertion.");
+
+            // Compare the data between $a2 and $a3
+            $this->assertEquals($a2->course, $a3->course, "The 'course' values do not match.");
+            $this->assertEquals($a2->status, $a3->status, "The 'status' values do not match.");
+            $this->assertEquals($a2->time, $a3->time, "The 'time' values do not match.");
+    
+            echo "\nRecord verified successfully. ID: {$a2->id}, Course: {$a2->course}, Status: {$a2->status}, Time: {$a2->time}";
+
+            // Delete the record to clean up the test
+            $a3->delete();
+            echo "\nRecord with ID {$a3->id} deleted successfully.";
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testRelationshipCreate(): void
+    {
+        echo "\n\n********************* Test 1-to-Many Create() *********************\n";
+
+        try {
+            // Find the student to associate the attendance record
+            $s1 = Student::find(2);
+            $this->assertNotNull($s1, "Student with ID 2 does not exist. Check the test data.");
+
+            // Use the create() method to insert a new attendance record
+            $a1 = $s1->attendance()->create([
+                'course' => 'Test course 666',
+                'status' => 'Present',
+                'time' => '2025-01-02'
+            ]);
+            echo "\nInserted record with ID: " . $a1->id;
+
+            // Retrieve the record to verify consistency
+            $a2 = Attendance::find($a1->id);
+            $this->assertNotNull($a2, "Attendance record with ID {$a1->id} could not be found after insertion.");
+
+            // Compare the data between $a1 and $a2
+            $this->assertEquals($a1->course, $a2->course, "The 'course' values do not match.");
+            $this->assertEquals($a1->status, $a2->status, "The 'status' values do not match.");
+            $this->assertEquals($a1->time, $a2->time, "The 'time' values do not match.");
+
+            echo "\nRecord verified successfully. ID: {$a1->id}, Course: {$a1->course}, Status: {$a1->status}, Time: {$a1->time}";
+
+            // Delete the record to clean up the test
+            $a2->delete();
+            echo "\nRecord with ID {$a2->id} deleted successfully.";
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testRelationshipAssociateDisassociate(): void
+    {
+        echo "\n\n********************* Test 1-to-Many Associate and Disassociate *********************\n";
+    
+        try {
+            // Create a new attendance record without associating it to any student
+            $a1 = Attendance::create([
+                'course' => 'Test course 777',
+                'status' => 'Absent',
+                'time' => '2025-01-03',
+            ]);
+            echo "\nInserted attendance record with ID: " . $a1->id;
+    
+            // Verify that the attendance record is not associated with any student
+            $this->assertNull($a1->student_id, "Attendance record should not be associated with any student initially.");
+    
+            // Find the student to associate with the attendance record
+            $s1 = Student::find(2);
+            $this->assertNotNull($s1, "Student with ID 2 does not exist. Check the test data.");
+    
+            // Associate the attendance record with the student
+            $a1->student()->associate($s1);
+            $a1->save();
+            echo "\nAssociated attendance record with student ID: " . $s1->id;
+    
+            // Verify the association
+            $a2 = Attendance::find($a1->id);
+            $this->assertEquals($s1->id, $a2->student_id, "Attendance record was not correctly associated with the student.");
+    
+            // Disassociate the attendance record from the student
+            $a2->student()->dissociate();
+            $a2->save();
+            echo "\nDisassociated attendance record from the student.";
+    
+            // Verify the disassociation
+            $a3 = Attendance::find($a1->id);
+            $this->assertNull($a3->student_id, "Attendance record should no longer be associated with any student.");
+    
+            echo "\nRecord successfully disassociated. ID: {$a1->id}, Course: {$a1->course}, Status: {$a1->status}, Time: {$a1->time}";
+    
+            // Clean up: Delete the attendance record
+            $a3->delete();
+            echo "\nRecord with ID {$a3->id} deleted successfully.";
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testManyToManyAttachingDetaching(): void
+    {
+        echo "\n\n********************* Test Many-to-Many Attaching/Detaching *********************\n";
+
+        try {
+            // Find a student and a paper to work with
+            $student = Student::find(2);
+            $this->assertNotNull($student, "Student with ID 1 does not exist. Check the test data.");
+
+            $paper = Paper::find(1);
+            $this->assertNotNull($paper, "Paper with ID 1 does not exist. Check the test data.");
+
+            // Step 1: Attach a paper to the student
+            $student->papers()->attach($paper->id, ['memo' => 'test']);
+            echo "\nAttached Paper(ID: {$paper->id}) to Student(ID: {$student->id}) with pivot data.";
+
+            // Verify the attachment by directly querying the pivot table
+            $attachedPivot = DB::table('table_paper_student')->get();
+            $a1 = $attachedPivot->where('paper_id',$paper->id);
+            $a2 = $a1->where('student_id',2)->first();
+            $this->assertNotNull($a2, "Failed to attach the paper to the student.");
+            // Check pivot data (e.g., memo)
+            $this->assertEquals('test', $a2->memo, "Pivot memo value does not match.");
+            echo "\nVerified attached paper with pivot data: memo = test";
+
+            // Step 2: Detach the paper from the student
+            $student->papers()->detach($paper->id);
+            echo "\nDetached Paper(ID: {$paper->id}) from Student(ID: {$student->id}).";
+
+            // Verify the detachment
+            $detachedPaper = DB::table('table_paper_student')->get();
+            $d1 = $detachedPaper->where('paper_id',$paper->id);
+            $d2 = $d1->where('student_id',2);
+            $this->assertTrue($d2->isEmpty(), "Failed to detach the paper from the student.");
+            echo "\nVerified the paper has been successfully detached.";
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
 }

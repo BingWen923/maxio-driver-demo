@@ -28,7 +28,8 @@ class Student extends Model
     public function papers()
     {
         // assuming there's a 'table_paper_student' pivot table with 'student_id' and 'paper_id' fields
-        return $this->belongsToMany(Paper::class, 'table_paper_student', 'student_id', 'paper_id');
+        return $this->belongsToMany(Paper::class, 'table_paper_student', 'student_id', 'paper_id')
+                    ->withPivot('id', 'student_id', 'paper_id');
     }
 
     public function phone_idcard():HasOneThrough
