@@ -37,7 +37,7 @@ if ($choice == 0) {
 
 if (isset($testMethods[$choice])) {
     $methodName = $testMethods[$choice];
-    echo "Running {$methodName}...\n";
+    echo "*************** Running {$methodName}..............\n";
 
     // execute the command
     $command = "php vendor\\bin\\phpunit --filter {$methodName} {$testfile}";

@@ -19,12 +19,77 @@ class RelationshipTest extends TestCase
     */
     protected function setUp(): void
     {
+        parent::setUp();
+
         // Bootstrapping Laravel application
         $this->app = require __DIR__ . '/../../bootstrap/app.php';
 
         // Ensure database connection for the test
         $this->app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
     }
+
+    public function testOneToOneHasOne(): void
+    {
+        echo "\n\n********************* Test One-to-One hasOne() Relationship *********************\n";
+    
+        try {
+            // Step 1: Find a student
+            $student = Student::find(1);
+            $this->assertNotNull($student, "Student with ID 1 does not exist. Check the test data.");
+            echo "\nLoaded Student(ID: {$student->id}).";
+    
+            // Step 2: Retrieve the associated phone record using hasOne()
+            $phone = $student->phone()->first();
+            $this->assertNotNull($phone, "Phone record for Student(ID: {$student->id}) does not exist.");
+            echo "\nLoaded Phone(ID: {$phone->id}) for Student(ID: {$student->id}).";
+    
+            // Step 3: Verify the relationship integrity
+            $this->assertEquals($student->id, $phone->student_id, "The 'student_id' in Phone does not match the Student ID.");
+            echo "\nVerified that Phone(ID: {$phone->id}) belongs to Student(ID: {$student->id}).";
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testHasManyAndBelongsTo(): void
+    {
+        echo "\n\n********************* Test hasMany() and belongsTo() Relationships *********************\n";
+
+        try {
+            // 1️⃣ test Student -> Attendance (hasMany)
+            $student = Student::find(1);
+            $this->assertNotNull($student, "Student with ID 1 does not exist. Check the test data.");
+            echo "\nLoaded Student(ID: {$student->id})";
+
+            // verify hasMany() if get the right Attendance record
+            $attendances = $student->attendance;
+            $this->assertInstanceOf(\Illuminate\Database\Eloquent\Collection::class, $attendances, "Student's attendance relationship did not return a Collection.");
+            echo "\nVerified hasMany() relationship: Student -> Attendance.";
+
+            // 2️⃣ test Attendance -> Student (belongsTo)
+            $attendance = Attendance::where('student_id', $student->id)->first();
+            $this->assertNotNull($attendance, "No attendance record found for Student(ID: {$student->id}).");
+            echo "\nLoaded Attendance(ID: {$attendance->id}) related to Student(ID: {$student->id}).";
+
+            // verify belongsTo() if get the right  Student record
+            $relatedStudent = $attendance->student;
+            $this->assertInstanceOf(Student::class, $relatedStudent, "Attendance's student relationship did not return a Student instance.");
+            echo "\nVerified belongsTo() relationship: Attendance -> Student.";
+        } catch (\Exception $e) {
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
 
     public function testHasOneOfMany(): void
     {
