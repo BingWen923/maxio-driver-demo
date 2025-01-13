@@ -14,6 +14,8 @@ class Attendance extends Model
     protected $keyType = 'int';
     public $incrementing = true;
 
+    protected $touches = ['student']; // Touching Parent Timestamps
+
     // Define the inverse of the one-to-many relationship
     public function student()
     {

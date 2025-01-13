@@ -510,4 +510,256 @@ class RelationshipTest extends TestCase
             restore_exception_handler();
         }
     }
+
+    public function testManyToManySync(): void
+    {
+        echo "\n\n********************* Test Many-to-Many Syncing Associations *********************\n";
+
+        try {
+            // Find a student and papers to work with
+            $student = Student::find(3);
+            $this->assertNotNull($student,"Student with ID 2 does not exist. Check the test data.");
+
+            $paper1 = Paper::find(1);
+            $paper2 = Paper::find(2);
+            $this->assertNotNull($paper1, "Paper with ID 1 does not exist. Check the test data.");
+            $this->assertNotNull($paper2, "Paper with ID 2 does not exist. Check the test data.");
+
+            // Step 1: Sync papers with the student (attach paper1 and paper2)
+            $student->papers()->sync([
+                $paper1->id => ['memo' => 'synced paper 1'],
+                $paper2->id => ['memo' => 'synced paper 2'],
+            ]);
+            echo "\nSynced papers (IDs: {$paper1->id}, {$paper2->id}) with Student(ID: {$student->id}) with pivot data.";
+
+            // fetching the entire pivot table into a collection
+            $pivotCollection = DB::table('table_paper_student')->get();
+
+            // Verify paper1 in the collection
+            $paper1Pivot = $pivotCollection->where('student_id', $student->id)->where('paper_id', $paper1->id)->first();
+            $this->assertNotNull($paper1Pivot, "Failed to sync Paper(ID: {$paper1->id}) to Student(ID: {$student->id}).");
+            $this->assertEquals('synced paper 1', $paper1Pivot->memo, "Pivot memo for Paper(ID: {$paper1->id}) does not match.");
+            echo "\nVerified synced Paper(ID: {$paper1->id}) with memo: synced paper 1";
+
+            // Verify paper2 in the collection
+            $paper2Pivot = $pivotCollection->where('student_id', $student->id)->where('paper_id', $paper2->id)->first();
+            $this->assertNotNull($paper2Pivot, "Failed to sync Paper(ID: {$paper2->id}) to Student(ID: {$student->id}).");
+            $this->assertEquals('synced paper 2', $paper2Pivot->memo, "Pivot memo for Paper(ID: {$paper2->id}) does not match.");
+            echo "\nVerified synced Paper(ID: {$paper2->id}) with memo: synced paper 2";
+
+            // Step 2: Resync with only one paper to test removal
+            $student->papers()->sync([
+                $paper1->id => ['memo' => 'synced again'],
+            ]);
+            echo "\nSynced only Paper(ID: {$paper1->id}) with Student(ID: {$student->id}) to test removal.";
+
+            // fetching the entire pivot table into a collection
+            $pivotCollection = DB::table('table_paper_student')->get();
+
+            // Verify paper1 remains in the collection
+            $paper1Pivot = $pivotCollection->where('student_id', $student->id)->where('paper_id', $paper1->id)->first();
+            $this->assertNotNull($paper1Pivot, "Paper(ID: {$paper1->id}) was incorrectly removed during sync.");
+            $this->assertEquals('synced again', $paper1Pivot->memo, "Pivot memo for Paper(ID: {$paper1->id}) does not match after resync.");
+            echo "\nVerified Paper(ID: {$paper1->id}) remains after resync with updated memo.";
+
+            // Verify paper2 has been removed from the collection
+            $paper2Pivot = $pivotCollection->where('student_id', $student->id)->where('paper_id', $paper2->id)->first();
+            $this->assertNull($paper2Pivot, "Paper(ID: {$paper2->id}) was not removed during sync.");
+            echo "\nVerified Paper(ID: {$paper2->id}) was successfully removed during resync.";
+
+            // Cleanup: Detach all papers from the student
+            $student->papers()->detach();
+            echo "\nDetached all papers for Student(ID: {$student->id}) to clean up residual records.";
+
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testManyToManyToggle(): void
+    {
+        echo "\n\n********************* Test Many-to-Many Toggle Associations *********************\n";
+    
+        try {
+            // Find a student and papers to work with
+            $student = Student::find(3);
+            $this->assertNotNull($student, "Student with ID 3 does not exist. Check the test data.");
+    
+            $paper1 = Paper::find(1);
+            $paper2 = Paper::find(2);
+            $this->assertNotNull($paper1, "Paper with ID 1 does not exist. Check the test data.");
+            $this->assertNotNull($paper2, "Paper with ID 2 does not exist. Check the test data.");
+            echo "\nLoaded student 3, and paper 1 & 2";
+    
+            // Step 1: Toggle papers (attach paper1 and paper2 if not attached, or detach if already attached)
+            $student->papers()->toggle([1,2]);
+/*             $student->papers()->toggle([
+                $paper1->id => ['memo' => 'toggled paper 1'],
+                $paper2->id => ['memo' => 'toggled paper 2'],
+            ]); */
+            echo "\nToggled papers (IDs: {$paper1->id}, {$paper2->id}) for Student(ID: {$student->id}).";
+    
+            // Fetch the entire pivot table into a collection
+            $pivotCollection = DB::table('table_paper_student')->get();
+    
+            // Verify paper1 in the collection
+            $paper1Pivot = $pivotCollection->where('student_id', $student->id)
+                ->where('paper_id', $paper1->id)
+                ->first();
+    
+            if ($paper1Pivot) {
+                echo "\nVerified Paper(ID: {$paper1->id}) is attached with memo: {$paper1Pivot->memo}";
+                $this->assertEquals('toggled paper 1', $paper1Pivot->memo, "Pivot memo for Paper(ID: {$paper1->id}) does not match.");
+            } else {
+                echo "\nVerified Paper(ID: {$paper1->id}) is detached.";
+            }
+    
+            // Verify paper2 in the collection
+            $paper2Pivot = $pivotCollection->where('student_id', $student->id)
+                ->where('paper_id', $paper2->id)
+                ->first();
+    
+            if ($paper2Pivot) {
+                echo "\nVerified Paper(ID: {$paper2->id}) is attached with memo: {$paper2Pivot->memo}";
+                $this->assertEquals('toggled paper 2', $paper2Pivot->memo, "Pivot memo for Paper(ID: {$paper2->id}) does not match.");
+            } else {
+                echo "\nVerified Paper(ID: {$paper2->id}) is detached.";
+            }
+    
+            // Step 2: Toggle the papers again to ensure proper toggling behavior
+            $student->papers()->toggle([
+                $paper1->id => ['memo' => 'toggled again paper 1'],
+                $paper2->id => ['memo' => 'toggled again paper 2'],
+            ]);
+            echo "\nToggled papers (IDs: {$paper1->id}, {$paper2->id}) for Student(ID: {$student->id}) again.";
+    
+            // Fetch the entire pivot table into a collection
+            $pivotCollection = DB::table('table_paper_student')->get();
+    
+            // Verify that paper1 and paper2 are toggled correctly
+            $paper1Pivot = $pivotCollection->where('student_id', $student->id)
+                ->where('paper_id', $paper1->id)
+                ->first();
+            $this->assertNull($paper1Pivot, "Paper(ID: {$paper1->id}) was not properly toggled off.");
+            echo "\nVerified Paper(ID: {$paper1->id}) is toggled off.";
+    
+            $paper2Pivot = $pivotCollection->where('student_id', $student->id)
+                ->where('paper_id', $paper2->id)
+                ->first();
+            $this->assertNull($paper2Pivot, "Paper(ID: {$paper2->id}) was not properly toggled off.");
+            echo "\nVerified Paper(ID: {$paper2->id}) is toggled off.";
+    
+            // Cleanup: Detach all papers from the student
+            $student->papers()->detach();
+            echo "\nDetached all papers for Student(ID: {$student->id}) to clean up residual records.";
+    
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testManyToManyUpdatingPivot(): void
+    {
+        echo "\n\n********************* Test Many-to-Many Updating Pivot Table *********************\n";
+
+        try {
+            // Step 1: Find the student and paper
+            $student = Student::find(3);
+            $this->assertNotNull($student, "Student with ID 3 does not exist. Check the test data.");
+
+            $paper = Paper::find(1);
+            $this->assertNotNull($paper, "Paper with ID 1 does not exist. Check the test data.");
+            echo "\nLoaded Student(ID: {$student->id}) and Paper(ID: {$paper->id}).";
+
+            // Step 2: Attach the paper with initial pivot data
+            $student->papers()->attach($paper->id, ['memo' => 'initial memo']);
+            echo "\nAttached Paper(ID: {$paper->id}) to Student(ID: {$student->id}) with memo: 'initial memo'.";
+
+            // Step 3: Update the pivot data
+            $student->papers()->updateExistingPivot($paper->id, ['memo' => 'updated memo']);
+            echo "\nUpdated pivot memo to 'updated memo'.";
+
+            // Step 4: Fetch and verify the updated pivot data
+            $pivotCollection = DB::table('table_paper_student')->get();
+            $pivotRecord = $pivotCollection->where('student_id', $student->id)
+                ->where('paper_id', $paper->id)
+                ->first();
+
+            $this->assertNotNull($pivotRecord, "Failed to find the pivot record after update.");
+            $this->assertEquals('updated memo', $pivotRecord->memo, "Pivot memo was not updated correctly.");
+            echo "\nVerified updated pivot memo: {$pivotRecord->memo}";
+
+            // Cleanup: Detach the paper to clean up
+            $student->papers()->detach($paper->id);
+            echo "\nDetached Paper(ID: {$paper->id}) from Student(ID: {$student->id}) to clean up.";
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testTouchingParentTimestamps(): void
+    {
+        echo "\n\n********************* Test Touching Parent Timestamps *********************\n";
+
+        try {
+            // Step 1: Find a student and their attendance record
+            $student = Student::find(1);
+            $this->assertNotNull($student, "Student with ID 1 does not exist. Check the test data.");
+
+            $attendance = Attendance::where('student_id', $student->id)->first();
+            $this->assertNotNull($attendance, "No attendance record found for Student(ID: {$student->id}).");
+
+            echo "\nLoaded Student(ID: {$student->id}) and Attendance(ID: {$attendance->id}).";
+
+            // Step 2: Record the original updated_at timestamp of the student
+            $originalStudentUpdatedAt = $student->updated_at;
+            echo "\nOriginal Student updated_at: {$originalStudentUpdatedAt}";
+
+            // Pause for a second to ensure a noticeable timestamp difference
+            sleep(1);
+
+            // Step 3: Update the attendance record
+            $attendance->update(['status' => 'Absent']);
+            echo "\nUpdated Attendance(ID: {$attendance->id}) status to 'Absent'.";
+
+            // Step 4: Refresh the student record to get the latest timestamp
+            $student->refresh();
+            $updatedStudentUpdatedAt = $student->updated_at;
+            echo "\nUpdated Student updated_at: {$updatedStudentUpdatedAt}";
+
+            // Step 5: Assert that the student's updated_at has changed
+            $this->assertTrue($updatedStudentUpdatedAt > $originalStudentUpdatedAt, "Student's updated_at was not updated when attendance was modified.");
+            echo "\nVerified that Student's updated_at timestamp was updated after modifying Attendance.";
+
+            // Cleanup: Revert the attendance status to 'Present'
+            $attendance->update(['status' => 'Present']);
+            echo "\nReverted Attendance(ID: {$attendance->id}) status back to 'Present'.";
+        } catch (\Exception $e) {
+            // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
 }
