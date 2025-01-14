@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Models\Attendance;
 use App\Models\Paper;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class RelationshipTest extends TestCase
 {
@@ -17,6 +18,8 @@ class RelationshipTest extends TestCase
       many to many  -   student to paper
       has one through   - student to phone to StudentIdCard
     */
+
+    protected static $isDataInitialized = false;
     protected function setUp(): void
     {
         parent::setUp();
@@ -26,6 +29,102 @@ class RelationshipTest extends TestCase
 
         // Ensure database connection for the test
         $this->app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
+
+        if (!self::$isDataInitialized) {
+            self::$isDataInitialized = true; 
+
+            echo "\n *** Test data verification and initialization. \n *** Please ensure that the target test bucket has been created.\n";
+
+            echo "\n************ Initializing student mock data *************\n";
+            $studentCount = Student::all()->count();
+            $colleges = ['Art', 'Science', 'Engineering', 'Business', 'Law'];
+            if ($studentCount < 5) {
+                $recordsToInsert = 5 - $studentCount;
+                for ($i = 1; $i <= $recordsToInsert; $i++) {
+                    Student::create([
+                        'name'    => "Test Student $i",
+                        'email'   => "student{$i}@example.com",
+                        'college' => $colleges[array_rand($colleges)],
+                        'grades'  => rand(60, 100),  
+                    ]);
+                }
+            }
+
+            echo "\n************ Initializing Phone mock data *************\n";
+            Student::all()->each(function ($student) {
+                if (!$student->phone) {
+                    $student->phone()->create([
+                        'cellphone'  => '123-456-7890',
+                        'home'       => '098-765-4321',
+                        'company'    => '555-555-5555',
+                    ]);
+                }
+            });
+
+            echo "\n************ Initializing Attendance mock data *************\n";
+            $student = Student::find(1);
+            if (!$student->attendance()->exists()) {
+                $student->attendance()->create([
+                    'time' => now(),
+                    'course' => 'Math 101',
+                    'status' => 'Present'
+                ]);
+                $student->attendance()->create([
+                    'time' => now()->subDay(),
+                    'course' => 'Science 202',
+                    'status' => 'Absent'
+                ]);
+            }
+            $student = Student::find(4);
+            if (!$student->attendance()->exists()) {
+                $student->attendance()->createMany([
+                    [
+                        'time' => now()->subDays(2),
+                        'course' => 'History 404',
+                        'status' => 'Present'
+                    ],
+                    [
+                        'time' => now()->subDays(3),
+                        'course' => 'Art 505',
+                        'status' => 'Absent'
+                    ]
+                ]); 
+            }
+
+            echo "\n************ Initializing Paper mock data *************\n";
+            $student1 = Student::find(1);
+            $student2 = Student::find(2);
+            $paper1 = Paper::create([
+                'code' => 'COMPX575',
+                'title' => 'Programming Tools and Techniques'
+            ]);
+            $paper2 = Paper::create([
+                'code' => 'CSMAX596',
+                'title' => 'Computer Science Internship'
+            ]);
+            $paper3 = Paper::create([
+                'code' => 'COMPX546',
+                'title' => 'Graph Theory'
+            ]);
+            $paper4 = Paper::create([
+                'code' => 'COMPX532',
+                'title' => 'Information Visualisation'
+            ]);
+            $student1->papers()->attach([$paper1->id, $paper2->id]);
+            $student2->papers()->attach([$paper1->id, $paper3->id]);
+            $paper4->students()->attach([$student1->id, $student2->id]); 
+
+            echo "\n************ Initializing StudentIdCard mock data *************\n";
+            $r1 = Student::find(1);
+            $r2 = $r1->phone()->first(); // Fetch related Phone
+            if (!$r2->idcard()->exists()) {
+                $r2->idcard()->create([
+                    'idnumber'  => 'SID' . rand(1000, 9999),     
+                    'issuedate' => Carbon::now(),                       
+                    'expiredate' => Carbon::now()->addYears(4),       
+                ]);
+            }
+        }
     }
 
     public function testOneToOneHasOne(): void
@@ -105,8 +204,8 @@ class RelationshipTest extends TestCase
             echo "\n*********************oldest ID: " . ($oldestAtt?->id ?? 'N/A');
             echo "\n*********************max ID: " . ($att?->id ?? 'N/A');
 
-            $maxid = Attendance::where('student_id', '1')->max('id');
-            $minid = Attendance::where('student_id', '1')->min('id');
+            $maxid = Attendance::where('student_id', 1)->max('id');
+            $minid = Attendance::where('student_id', 1)->min('id');
             echo "\n*********Calculated max ID: $maxid and min ID: $minid\n";
 
             $this->assertNotNull($latestAtt, "Latest attendance should not be null.");
