@@ -10,6 +10,6 @@ class TableNoAutoInc extends Model
     protected $table = 'table_noautoinc';
     protected $fillable = ['key', 'field1', 'field2', 'field3'];
     protected $keyType = 'string';
-    protected $primarykey = "key";
+    protected $primaryKey = "key";
     public $incrementing = false;
 }
