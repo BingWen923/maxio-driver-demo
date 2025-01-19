@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 use App\Helpers\HtmlGenerateHelper;
+use ReflectionClass;
 
 class StudentController extends Controller
 {
@@ -464,7 +465,6 @@ class StudentController extends Controller
             'college'=> 'required|string|max:255',
             'grades' => 'required|integer|between:0,100',
         ]);
-        dd($validated);
         $student->update($validated);
 
         return redirect()->route('students.index')->with('success', 'Student updated successfully.');

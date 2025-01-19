@@ -36,10 +36,11 @@ class RelationshipTest extends TestCase
             echo "\n *** Test data verification and initialization. \n *** Please ensure that the target test bucket has been created.\n";
 
             echo "\n************ Initializing student mock data *************\n";
-            $studentCount = Student::all()->count();
+            $studentCount = Student::count();
             $colleges = ['Art', 'Science', 'Engineering', 'Business', 'Law'];
             if ($studentCount < 5) {
                 $recordsToInsert = 5 - $studentCount;
+                echo "*** Student records created: {$recordsToInsert}\n";
                 for ($i = 1; $i <= $recordsToInsert; $i++) {
                     Student::create([
                         'name'    => "Test Student $i",
@@ -62,8 +63,9 @@ class RelationshipTest extends TestCase
             });
 
             echo "\n************ Initializing Attendance mock data *************\n";
-            $student = Student::find(1);
+            $student = Student::first();
             if (!$student->attendance()->exists()) {
+                echo "*** attendance records created for student: id = {$student->id})\n";
                 $student->attendance()->create([
                     'time' => now(),
                     'course' => 'Math 101',
@@ -75,8 +77,9 @@ class RelationshipTest extends TestCase
                     'status' => 'Absent'
                 ]);
             }
-            $student = Student::find(4);
+            $student = Student::skip(3)->first();
             if (!$student->attendance()->exists()) {
+                echo "*** attendance records created for student: id = {$student->id})\n";
                 $student->attendance()->createMany([
                     [
                         'time' => now()->subDays(2),
@@ -87,37 +90,48 @@ class RelationshipTest extends TestCase
                         'time' => now()->subDays(3),
                         'course' => 'Art 505',
                         'status' => 'Absent'
+                    ],
+                    [
+                        'time' => now()->subDays(4),
+                        'course' => 'Law 606',
+                        'status' => 'Present'
                     ]
                 ]); 
             }
 
             echo "\n************ Initializing Paper mock data *************\n";
-            $student1 = Student::find(1);
-            $student2 = Student::find(2);
-            $paper1 = Paper::create([
-                'code' => 'COMPX575',
-                'title' => 'Programming Tools and Techniques'
-            ]);
-            $paper2 = Paper::create([
-                'code' => 'CSMAX596',
-                'title' => 'Computer Science Internship'
-            ]);
-            $paper3 = Paper::create([
-                'code' => 'COMPX546',
-                'title' => 'Graph Theory'
-            ]);
-            $paper4 = Paper::create([
-                'code' => 'COMPX532',
-                'title' => 'Information Visualisation'
-            ]);
-            $student1->papers()->attach([$paper1->id, $paper2->id]);
-            $student2->papers()->attach([$paper1->id, $paper3->id]);
-            $paper4->students()->attach([$student1->id, $student2->id]); 
+            $paperCount = Paper::count();
+            if ($paperCount < 4) {
+                echo "*** Paper records creating...\n";
+                $student1 = Student::first();
+                $student2 = Student::skip(1)->first();
+                $paper1 = Paper::create([
+                    'code' => 'COMPX575',
+                    'title' => 'Programming Tools and Techniques'
+                ]);
+                $paper2 = Paper::create([
+                    'code' => 'CSMAX596',
+                    'title' => 'Computer Science Internship'
+                ]);
+                $paper3 = Paper::create([
+                    'code' => 'COMPX546',
+                    'title' => 'Graph Theory'
+                ]);
+                $paper4 = Paper::create([
+                    'code' => 'COMPX532',
+                    'title' => 'Information Visualisation'
+                ]);
+                echo "*** paper-student pivot records creating...\n";
+                $student1->papers()->attach([$paper1->id, $paper2->id]);
+                $student2->papers()->attach([$paper1->id, $paper3->id]);
+                $paper4->students()->attach([$student1->id, $student2->id]);
+            }
 
             echo "\n************ Initializing StudentIdCard mock data *************\n";
-            $r1 = Student::find(1);
+            $r1 = Student::first();
             $r2 = $r1->phone()->first(); // Fetch related Phone
             if (!$r2->idcard()->exists()) {
+                echo "*** StudentIdCard records created.\n";
                 $r2->idcard()->create([
                     'idnumber'  => 'SID' . rand(1000, 9999),     
                     'issuedate' => Carbon::now(),                       
@@ -133,8 +147,8 @@ class RelationshipTest extends TestCase
     
         try {
             // Step 1: Find a student
-            $student = Student::find(1);
-            $this->assertNotNull($student, "Student with ID 1 does not exist. Check the test data.");
+            $student = Student::first();
+            $this->assertNotNull($student, "No student record found. Check the test data.");
             echo "\nLoaded Student(ID: {$student->id}).";
     
             // Step 2: Retrieve the associated phone record using hasOne()
@@ -162,7 +176,7 @@ class RelationshipTest extends TestCase
 
         try {
             // 1️⃣ test Student -> Attendance (hasMany)
-            $student = Student::find(1);
+            $student = Student::first();
             $this->assertNotNull($student, "Student with ID 1 does not exist. Check the test data.");
             echo "\nLoaded Student(ID: {$student->id})";
 
@@ -173,6 +187,7 @@ class RelationshipTest extends TestCase
 
             // 2️⃣ test Attendance -> Student (belongsTo)
             $attendance = Attendance::where('student_id', $student->id)->first();
+            dump(json_encode($attendance, JSON_PRETTY_PRINT));
             $this->assertNotNull($attendance, "No attendance record found for Student(ID: {$student->id}).");
             echo "\nLoaded Attendance(ID: {$attendance->id}) related to Student(ID: {$student->id}).";
 
@@ -195,7 +210,7 @@ class RelationshipTest extends TestCase
         echo "\n********************* test one to many relationship - has one of many *********************\n";
         echo "    hasone() latestOfMany() oldestOfMany() \n";
         try {
-            $student = Student::find(1);
+            $student = Student::first();
             $latestAtt = $student->hasOne(Attendance::class)->latestOfMany()->first();
             $oldestAtt = $student->hasOne(Attendance::class)->oldestOfMany()->first();
             $att = $student->hasOne(Attendance::class)->ofMany('id', 'max')->first();
@@ -228,11 +243,11 @@ class RelationshipTest extends TestCase
         echo "\n********************* test one to many relationship - HasOneThrough *********************\n";
         echo "   hasOneThrough() \n";
         try {
-            $r1 = Student::find(1);
+            $r1 = Student::first();
             $r2 = $r1->phone()->first(); // Fetch related Phone
             $r3 = $r2->idcard; // Use property-like access to fetch the related StudentIdCard
          
-            $h = Student::find(1)->phone_idcard()->first();
+            $h = Student::first()->phone_idcard()->first();
 
             // Check if both $r3 and $h are not null
             echo "\n*********************the idcard ID: " . ($r3?->id ?? 'N/A');
@@ -261,9 +276,9 @@ class RelationshipTest extends TestCase
         echo "\n\n********************* test many to many relationship - retrieving  *********************\n";
     
         try {
-            $s1 = Student::find(1);
+            $s1 = Student::with('papers')->first();
             $papers = $s1->papers;
-            $this->assertFalse($papers->isEmpty(), "Student(id:1)'s papers should not be empty.");
+            $this->assertFalse($papers->isEmpty(), "Student(id:{$s1->id})'s papers should not be empty.");
 
             foreach ($papers as $paper) {
                 echo "\n**pivot ID: " . ($paper->pivot->id ?? 'N/A').
@@ -451,11 +466,41 @@ class RelationshipTest extends TestCase
         echo "\n\n********************* test 1 to many Eager Loading *********************\n";
     
         try {
-            // Eager Loading
-            $s1 = Student::with('attendance')->get();
-            dump($s1);
-            echo "\n** Students eager loading count: ".$s1->count();
+            // Eager Loading single relationship
+            $studentsWithAttendance = Student::with('attendance')->get();
+            echo "\n** Students eager loading count (attendance): " . $studentsWithAttendance->count();
+            $this->assertGreaterThanOrEqual(1, $studentsWithAttendance->count(), "Expected Students eager loading counts>=1. Check the test data.");
+
+            // Assert that attendance relationship is loaded
+            foreach ($studentsWithAttendance as $student) {
+                $this->assertTrue($student->relationLoaded('attendance'), "Attendance relationship is not loaded.");
+            }
+
+            // Eager Loading multiple relationships
+            $studentsWithMultipleRelations = Student::with(['attendance', 'phone'])->get();
+            echo "\n** Students eager loading count (attendance & phone): " . $studentsWithMultipleRelations->count();
+            $this->assertGreaterThanOrEqual(1, $studentsWithMultipleRelations->count(), "Expected Students eager loading counts>=1. Check the test data.");
+
+            // Assert that both attendance and phone relationships are loaded
+            foreach ($studentsWithMultipleRelations as $student) {
+                $this->assertTrue($student->relationLoaded('attendance'), "Attendance relationship is not loaded.");
+                $this->assertTrue($student->relationLoaded('phone'), "Phone relationship is not loaded.");
+            }
+
+            // Nested Eager Loading
+            $s1 = Student::with('phone.idcard')->get();
+            echo "\n** Students eager loading count (phone.idcard): " . $s1->count();
             $this->assertGreaterThanOrEqual(1, $s1->count(), "Expected Students eager loading counts>=1. Check the test data.");
+
+            // Assert that phone and nested idcard relationships are loaded
+            foreach ($s1 as $student) {
+                $this->assertTrue($student->relationLoaded('phone'), "Phone relationship is not loaded.");
+
+                // if has phone , check idcard is loaded or not.
+                if ($student->phone) {
+                    $this->assertTrue($student->phone->relationLoaded('idcard'), "Nested idcard relationship is not loaded.");
+                }
+            }
 
         } catch (\Exception $e) {
             // Catch exceptions and display the error message and stack trace

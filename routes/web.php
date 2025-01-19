@@ -7,6 +7,9 @@ Route::get('/', function () {
 });
 
 use App\Http\Controllers\studentController;
+use App\Http\Controllers\DBViewerController;
+
+Route::get('dbviewer', [DBViewerController::class, 'ListTables'])->name('dbviewer.ListTables');
 
 Route::get('students', [studentController::class, 'index'])->name('students.index');
 Route::get('students/create', [studentController::class, 'create'])->name('students.create');
