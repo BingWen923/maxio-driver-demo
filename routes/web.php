@@ -3,7 +3,13 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return "
+        <h2>Welcome to the Exaba Laravel Driver Demo Application</h2>
+        <ul>
+            <li><a href='" . route('dbviewer.ListTables') . "'>DB Viewer</a></li>
+            <li><a href='" . route('students.index') . "'>Students Demo</a></li>
+        </ul>
+    ";
 });
 
 use App\Http\Controllers\studentController;
