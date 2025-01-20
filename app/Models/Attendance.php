@@ -21,4 +21,9 @@ class Attendance extends Model
     {
         return $this->belongsTo(Student::class, 'student_id', 'id'); // 'student_id' references the id in the students table
     }
+
+    public function attendance_through()
+    {
+        return $this->hasMany(Attendance_through::class, 'attendance_id', 'id'); 
+    }
 }

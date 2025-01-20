@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Student extends Model
 {
@@ -35,5 +36,10 @@ class Student extends Model
     public function phone_idcard():HasOneThrough
     {
         return $this->hasOneThrough(StudentIdCard::class, Phone::class);
+    }
+
+    public function attendance_through():HasManyThrough
+    {
+        return $this->hasManyThrough(Attendance_through::class, Attendance::class);
     }
 }
