@@ -5,7 +5,6 @@ namespace tests\Unit;
 use PHPUnit\Framework\TestCase;
 use App\Models\Student;
 use App\Models\Attendance;
-use App\Models\Attendance2;
 use App\Models\Paper;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -285,26 +284,31 @@ class RelationshipTest extends TestCase
         echo "   hasManyThrough() \n";
         try {
             $r1 = Student::first();
-            $r2 = $r1->attendance()->first(); // Fetch related Phone
-            $r3 = $r2->attendance_through()->first(); 
-         
+            $r2 = $r1->attendance()->first(); // Fetch related Attendance record
+            $r3 = $r2->attendance_through()->first();  // Fetch related Attendance_through record
+            //echo '*** $r3: ';
+            //echo $r3->toJson(JSON_PRETTY_PRINT);
+    
             $h = Student::first()->attendance_through()->first();
-
+            //$h = Student::first()->attendance_through()->first();  // Using hasManyThrough to get Attendance_through directly
+            //echo '*** $h: ';
+            //echo $h->toJson(JSON_PRETTY_PRINT);
+    
             // Check if both $r3 and $h are not null
-            echo "\n*********************the idcard ID: " . ($r3?->id ?? 'N/A');
-            $this->assertNotNull($r3, "Student's phone's idcard should not be null, check the test data.");
-            echo "\n*********************the phone_idcard() ID: " . ($h?->id ?? 'N/A');
-            $this->assertNotNull($h, "Student's phone_idcard should not be null.");
-
-
+            echo "\n********************* the attendance_through ID (via attendance): " . ($r3?->id ?? 'N/A');
+            $this->assertNotNull($r3, "Student's attendance_through record should not be null, check the test data.");
+            echo "\n********************* the attendance_through ID (via hasManyThrough): " . ($h?->id ?? 'N/A');
+            $this->assertNotNull($h, "Student's attendance_through record should not be null.");
+    
             // Check whether $r3->id is equal to $h->id
-            $this->assertEquals($r3->id, $h->id, "The ID of the idcard obtained via phone should match the one obtained via HasOneThrough relationship.");
+            $this->assertEquals($r3->id, $h->id, "The ID of the attendance_through obtained via attendance should match the one obtained via HasManyThrough relationship.");
         } finally {
             // Ensure cleanup is always executed
             restore_error_handler();
             restore_exception_handler();
         }
     }
+    
     
     public function testManyToMany_retrieving(): void
     {
@@ -1004,6 +1008,54 @@ class RelationshipTest extends TestCase
             echo "\nReverted Attendance(ID: {$attendance->id}) status back to 'Present'.";
         } catch (\Exception $e) {
             // Catch exceptions and display the error message and stack trace
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+        } finally {
+            // Ensure cleanup is always executed
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testModelBatchInsert(): void
+    {
+
+        echo "\n\n********************* Test Student Insert and Update Timestamps *********************\n";
+
+        try {
+            // Prepare test data
+            $data = [
+                [
+                    "name"    => "Alice Smith",
+                    "email"   => "alice@example.com",
+                    "grades"  => 25,
+                    "college" => "Science",
+                ],
+                [
+                    "name"    => "Bob Smith",
+                    "email"   => "bob@example.com",
+                    "grades"  => 30,
+                    "college" => "Arts",
+                ],
+                [
+                    "name"    => "Charlie Smith",
+                    "email"   => "charlie@example.com",
+                    "grades"  => 35,
+                    "college" => "Engineering",
+                ]
+            ];
+
+            // Insert the records
+            $insertSuccess = Student::insert($data);
+            $this->assertTrue($insertSuccess, "Student records were not inserted successfully.");
+            echo "\nInserted records successfully.";
+
+            // Retrieve inserted records
+            $student = Student::orderBy('id','desc')->first();
+            echo $student->toJson(JSON_PRETTY_PRINT);
+
+        } catch (\Exception $e) {
+            // Handle exceptions
             echo "\nError: " . $e->getMessage();
             echo "\nTrace: " . $e->getTraceAsString();
         } finally {

@@ -1,0 +1,103 @@
+$existingVins = CampaignManagerVinModelVariant::query()->whereIn('vin', $vins)->get()->keyBy('vin');
+12:08
+$vinModelVariant = CampaignManagerVinModelVariant::query()
+                        ->with('campaignRows')
+                        ->create([
+                            'vin' => $data->vin,
+                            'name' => $data->modelVariant,
+                        ]);
+12:09
+$codes = ['DFLEET', 'INTFLEET', 'GFLEET', 'RFLEET'];
+            SaleType::query()->whereIn('code', $codes)->get()->each(function (SaleType $saleType) {
+                $saleType->bulk_vins = true;
+                $saleType->save();
+            });
+12:09
+        $trimLevel = TrimLevel::query()->where('id', $id)->firstOrFail();
+12:09
+ $profiles = VehicleProfile::query()->whereHas('vehicle', function ($query) use ($vehicle) {
+            $query->where('data_document_brand_vehicles.id', $vehicle->id);
+        })->get();
+
+
+Thomas Hargreaves
+  12:09 PM
+return $this->query()
+            ->where('vehicle_id', Vehicle::query()->where('vin', $vin)->value('id'))
+            ->where('draft', false)
+            ->latest('created_at')
+            ->first();
+
+1 reply
+Today at 12:16 PMView thread
+New
+
+
+Thomas Hargreaves
+  12:10 PM
+SaleType::query()->find($model->id)
+12:10
+ $event = Event::query()->findOrFail($eventId);
+12:11
+$lead = SugarCrmLead::query()->updateOrCreate([
+            'user_uuid' => $automoteUserId,
+            'sugar_uuid' => $sugarCrmAccountId
+        ]);
+12:13
+$query->with('status')
+            ->orderByDesc(
+                VehicleStatus::query()
+                    ->select('slug')
+                    ->whereColumn('id', 'status_id')
+                    ->orderBy('slug')
+                    ->limit(1)
+            );
+12:13
+$qurery->whereDoesntHave('status', function (Builder $query) {
+                // Filter out Dealer Stock, Profiled and Not Applicable VINs
+                $query->whereIn('slug', [
+                    VehicleStatusEnum::DealerStock->value,
+                    VehicleStatusEnum::Profiled->value,
+                    VehicleStatusEnum::NotApplicable->value,
+                ]);
+                // Filter out Landed VINs that are not available
+                $query->orWhere(function (Builder $query) {
+                    $query->where('slug', VehicleStatusEnum::Landed->value)
+                        ->where('available', false);
+                });
+            })
+12:15
+Student::query()->where('sch_email', $email)->orWhere('pi_email', $email)->get()
+12:15
+$jobPath = CareersNZJobsPathway::query()->firstOrCreate(['jobID' => $it->ID, 'vocationalPathway' => $path->Name]);
+12:16
+AsStudentAssessment::query()->withoutGlobalScopes()->where([
+                'teacher_systemUserCode' => $teacherCodeToRemove,
+                'schoolCode' => $schoolCode,
+            ])->update(['teacher_systemUserCode' => $teacherCodeToKeep]);
+12:16
+$messages = Message::query()->where('systemUserCode', $teacher->systemUserCode)
+                ->orWhere('m_OtherSystemUserCode', $teacher->systemUserCode)
+                ->orderby('m_ID', 'ASC')
+                ->get();
+
+
+Nick Humphries
+  12:17 PM
+And "query()" isn't required, we just use it to help the IDE know whats going on
+
+
+Thomas Hargreaves
+  12:17 PM
+$deletedStaff = KamarStaff::query()->where('last_updated', '<', $dayBefore)->delete();
+12:18
+Teacher::query()->where('ui_email', $workEmail)->count();
+Teacher::query()->where('ui_email', $workEmail)->exists();
+12:19
+Okay I think that'll do for now
+
+
+
+
+
+
