@@ -211,6 +211,14 @@ class RealProjectCodeTest extends TestCase
                 ['id' => 4, 'slug' => 'Landed', 'available' => false],
                 ['id' => 5, 'slug' => 'Available', 'available' => true],
             ]);
+
+            echo "\n******** Initializing test data: Student ********\n";
+            Student::truncate();
+            Student::insert([
+                ['id' => 1, 'sch_email' => 'student1@school.com', 'pi_email' => 'student1@personal.com'],
+                ['id' => 2, 'sch_email' => 'student2@school.com', 'pi_email' => 'student2@personal.com'],
+                ['id' => 3, 'sch_email' => 'student3@school.com', 'pi_email' => 'student3@personal.com'],
+            ]);
         }
     }
 
@@ -604,6 +612,58 @@ class RealProjectCodeTest extends TestCase
             $this->fail('Test failed due to an exception.');
         } finally {
             // Ensure cleanup
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testRetrieveStudentsByEmail(): void
+    {
+        echo "\n******* Testing retrieval of Students by sch_email or pi_email *******\n";
+
+        try {
+            // Test Case 1: Email matches sch_email
+            $email = 'student1@school.com';
+            $students = Student::query()
+                ->where('sch_email', $email)
+                ->orWhere('pi_email', $email)
+                ->get();
+
+            // Verify the results
+            $this->assertNotEmpty($students, "No students found with sch_email or pi_email = {$email}.");
+            $this->assertCount(1, $students, "Expected exactly 1 student for email = {$email}.");
+            $this->assertEquals(1, $students->first()->id, "The retrieved student ID does not match the expected value.");
+
+            echo "\n******* Retrieved Students (Case 1): " . $students->toJson(JSON_PRETTY_PRINT) . " *******\n";
+
+            // Test Case 2: Email matches pi_email
+            $email = 'student2@personal.com';
+            $students = Student::query()
+                ->where('sch_email', $email)
+                ->orWhere('pi_email', $email)
+                ->get();
+
+            // Verify the results
+            $this->assertNotEmpty($students, "No students found with sch_email or pi_email = {$email}.");
+            $this->assertCount(1, $students, "Expected exactly 1 student for email = {$email}.");
+            $this->assertEquals(2, $students->first()->id, "The retrieved student ID does not match the expected value.");
+
+            echo "\n******* Retrieved Students (Case 2): " . $students->toJson(JSON_PRETTY_PRINT) . " *******\n";
+
+            // Test Case 3: Email does not match any record
+            $email = 'nonexistent@school.com';
+            $students = Student::query()
+                ->where('sch_email', $email)
+                ->orWhere('pi_email', $email)
+                ->get();
+
+            // Verify the results
+            $this->assertEmpty($students, "Students should not be found with sch_email or pi_email = {$email}.");
+            echo "\n******* No Students Retrieved (Case 3) as expected for email: {$email} *******\n";
+        } catch (\Exception $e) {
+            echo "\nError: " . $e->getMessage();
+            $this->fail('Test failed due to an exception.');
+        } finally {
             restore_error_handler();
             restore_exception_handler();
         }
