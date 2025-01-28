@@ -219,6 +219,46 @@ class RealProjectCodeTest extends TestCase
                 ['id' => 2, 'sch_email' => 'student2@school.com', 'pi_email' => 'student2@personal.com'],
                 ['id' => 3, 'sch_email' => 'student3@school.com', 'pi_email' => 'student3@personal.com'],
             ]);
+
+            echo "\n******** Initializing test data: CareersNZJobsPathway ********\n";
+            CareersNZJobsPathway::truncate();
+            CareersNZJobsPathway::insert([
+                ['jobID' => 101, 'vocationalPathway' => 'Health and Wellbeing'],
+                ['jobID' => 102, 'vocationalPathway' => 'Construction and Infrastructure'],
+            ]);
+
+            echo "\n******** Initializing test data: AsStudentAssessment ********\n";
+            AsStudentAssessment::truncate();
+            AsStudentAssessment::insert([
+                ['teacher_systemUserCode' => 'TCHR001', 'schoolCode' => 'SCH001'],
+                ['teacher_systemUserCode' => 'TCHR002', 'schoolCode' => 'SCH002'],
+                ['teacher_systemUserCode' => 'TCHR003', 'schoolCode' => 'SCH001'],
+                ['teacher_systemUserCode' => 'TCHR004', 'schoolCode' => 'SCH002'],
+            ]);
+
+            echo "\n******** Initializing test data: Message ********\n";
+            Message::truncate();
+            Message::insert([
+                ['systemUserCode' => 'TCHR001', 'm_OtherSystemUserCode' => 'TCHR002', 'm_ID' => 1],
+                ['systemUserCode' => 'TCHR001', 'm_OtherSystemUserCode' => 'TCHR003', 'm_ID' => 2],
+                ['systemUserCode' => 'TCHR002', 'm_OtherSystemUserCode' => 'TCHR004', 'm_ID' => 3],
+            ]);
+
+            echo "\n******** Initializing test data: KamarStaff ********\n";
+            KamarStaff::truncate();
+            KamarStaff::insert([
+                ['last_updated' => now()->subDays(10)],
+                ['last_updated' => now()->subDays(5)],
+                ['last_updated' => now()->subDays(1)],
+            ]);
+
+            echo "\n******** Initializing test data: Teacher ********\n";
+            Teacher::truncate();
+            Teacher::insert([
+                ['ui_email' => 'teacher1@example.com'],
+                ['ui_email' => 'teacher2@example.com'],
+                ['ui_email' => 'teacher3@example.com'],
+            ]);
         }
     }
 
@@ -660,6 +700,197 @@ class RealProjectCodeTest extends TestCase
             // Verify the results
             $this->assertEmpty($students, "Students should not be found with sch_email or pi_email = {$email}.");
             echo "\n******* No Students Retrieved (Case 3) as expected for email: {$email} *******\n";
+        } catch (\Exception $e) {
+            echo "\nError: " . $e->getMessage();
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testFirstOrCreateCareersNZJobsPathway(): void
+    {
+        echo "\n******* Testing firstOrCreate for CareersNZJobsPathway *******\n";
+
+        try {
+            // Simulated data for testing
+            $it = (object) ['ID' => 103];
+            $path = (object) ['Name' => 'Creative Industries'];
+
+            // Case 1: Create a new record if it does not exist
+            $jobPath = CareersNZJobsPathway::query()->firstOrCreate(
+                ['jobID' => $it->ID, 'vocationalPathway' => $path->Name]
+            );
+
+            // Verify the created record
+            $this->assertNotNull($jobPath, 'The jobPath record should not be null.');
+            $this->assertEquals($it->ID, $jobPath->jobID, 'The jobID does not match the expected value.');
+            $this->assertEquals($path->Name, $jobPath->vocationalPathway, 'The vocationalPathway does not match the expected value.');
+
+            echo "\n******* Created or Retrieved JobPath (Case 1): " . $jobPath->toJson(JSON_PRETTY_PRINT) . " *******\n";
+
+            // Case 2: Retrieve an existing record
+            $it = (object) ['ID' => 101];
+            $path = (object) ['Name' => 'Health and Wellbeing'];
+
+            $jobPath = CareersNZJobsPathway::query()->firstOrCreate(
+                ['jobID' => $it->ID, 'vocationalPathway' => $path->Name]
+            );
+
+            // Verify the retrieved record
+            $this->assertNotNull($jobPath, 'The jobPath record should not be null.');
+            $this->assertEquals($it->ID, $jobPath->jobID, 'The jobID does not match the expected value.');
+            $this->assertEquals($path->Name, $jobPath->vocationalPathway, 'The vocationalPathway does not match the expected value.');
+
+            echo "\n******* Retrieved Existing JobPath (Case 2): " . $jobPath->toJson(JSON_PRETTY_PRINT) . " *******\n";
+        } catch (\Exception $e) {
+            // Handle exceptions
+            echo "\nError: " . $e->getMessage();
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testUpdateAsStudentAssessmentTeacherCode(): void
+    {
+        echo "\n******* Testing update for AsStudentAssessment teacherSystemUserCode *******\n";
+
+        try {
+            // Simulated data for testing
+            $teacherCodeToRemove = 'TCHR001';
+            $teacherCodeToKeep = 'TCHR005';
+            $schoolCode = 'SCH001';
+
+            /* $r = AsStudentAssessment::where([
+                'teacher_systemUserCode' => $teacherCodeToRemove,
+                'schoolCode' => $schoolCode,
+            ])->get();
+            echo "\n******* r: " . $r->toJson(JSON_PRETTY_PRINT) . " *******\n";
+            return; */
+
+            // Perform the update
+            $updatedCount = AsStudentAssessment::query()
+                ->withoutGlobalScopes()
+                ->where([
+                    'teacher_systemUserCode' => $teacherCodeToRemove,
+                    'schoolCode' => $schoolCode,
+                ])
+                ->update(['teacher_systemUserCode' => $teacherCodeToKeep]);
+
+            // Verify the update
+            $this->assertGreaterThan(0, $updatedCount, 'No records were updated.');
+            echo "\n******* Number of records updated: {$updatedCount} *******\n";
+
+            // Verify the updated record
+            $updatedRecords = AsStudentAssessment::query()
+                ->where([
+                    'teacher_systemUserCode' => $teacherCodeToKeep,
+                    'schoolCode' => $schoolCode,
+                ])
+                ->get();
+
+            $this->assertCount($updatedCount, $updatedRecords, 'The updated record count does not match the expected count.');
+            echo "\n******* Updated Records: " . $updatedRecords->toJson(JSON_PRETTY_PRINT) . " *******\n";
+
+            // Verify that no records with the old teacherSystemUserCode exist
+            $remainingOldRecords = AsStudentAssessment::query()
+                ->where([
+                    'teacher_systemUserCode' => $teacherCodeToRemove,
+                    'schoolCode' => $schoolCode,
+                ])
+                ->get();
+
+            $this->assertEmpty($remainingOldRecords, 'There are still records with the old teacherSystemUserCode.');
+            echo "\n******* Verified that old records are removed successfully *******\n";
+        } catch (\Exception $e) {
+            // Handle exceptions
+            echo "\nError: " . $e->getMessage();
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testMessagesQuery(): void
+    {
+        echo "\n******* Testing Message query by systemUserCode and m_OtherSystemUserCode *******\n";
+
+        try {
+            // Simulated data for testing
+            $teacher = (object) ['systemUserCode' => 'TCHR001'];
+
+            // Execute the query
+            $messages = Message::query()
+                ->where('systemUserCode', $teacher->systemUserCode)
+                ->orWhere('m_OtherSystemUserCode', $teacher->systemUserCode)
+                ->orderby('m_ID', 'ASC')
+                ->get();
+
+            // Verify the query results
+            $this->assertNotEmpty($messages, 'No messages were retrieved for the given systemUserCode.');
+            $this->assertEquals(2, $messages->count(), 'The number of retrieved messages does not match the expected count.');
+            echo "\n******* Retrieved Messages: " . $messages->toJson(JSON_PRETTY_PRINT) . " *******\n";
+        } catch (\Exception $e) {
+            echo "\nError: " . $e->getMessage();
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testDeleteOldKamarStaffRecords(): void
+    {
+        echo "\n******* Testing deletion of old KamarStaff records *******\n";
+
+        try {
+            // Simulated threshold date
+            $dayBefore = now()->subDays(7);
+
+            // Execute the deletion
+            $deletedCount = KamarStaff::query()->where('last_updated', '<', $dayBefore)->delete();
+
+            // Verify the deletion
+            $this->assertEquals(1, $deletedCount, 'The number of deleted records does not match the expected count.');
+            echo "\n******* Number of records deleted: {$deletedCount} *******\n";
+
+            // Verify that no old records exist
+            $remainingRecords = KamarStaff::query()->where('last_updated', '<', $dayBefore)->get();
+            $this->assertEmpty($remainingRecords, 'There are still old KamarStaff records remaining.');
+        } catch (\Exception $e) {
+            echo "\nError: " . $e->getMessage();
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testTeacherQueryByEmail(): void
+    {
+        echo "\n******* Testing Teacher query by email existence and count *******\n";
+
+        try {
+            // Simulated email for testing
+            $workEmail = 'teacher2@example.com';
+
+            // Execute the count query
+            $count = Teacher::query()->where('ui_email', $workEmail)->count();
+
+            // Verify the count
+            $this->assertEquals(1, $count, "The count for email {$workEmail} does not match the expected value.");
+            echo "\n******* Count of teachers with email {$workEmail}: {$count} *******\n";
+
+            // Execute the existence query
+            $exists = Teacher::query()->where('ui_email', $workEmail)->exists();
+
+            // Verify existence
+            $this->assertTrue($exists, "The email {$workEmail} should exist in the database.");
+            echo "\n******* Verified existence of email {$workEmail} *******\n";
         } catch (\Exception $e) {
             echo "\nError: " . $e->getMessage();
             $this->fail('Test failed due to an exception.');
