@@ -9,7 +9,7 @@ use App\Models\Phone;
 
 class CampaignManagerVinModelVariant extends Model
 {
-    protected $table = 'R_campaign_manager_vin_model_variants';
+    protected $table = 'tb_campaign_manager_vin_model_variants';
     protected $fillable = ['vin', 'name'];
 
     public function campaignRows(): HasMany
@@ -20,7 +20,7 @@ class CampaignManagerVinModelVariant extends Model
 
 class CampaignRow extends Model
 {
-    protected $table = 'R_campaign_rows';
+    protected $table = 'tb_campaign_rows';
     protected $fillable = ['vin_model_variant_id', 'row_data'];
     
     public function campaignManagerVinModelVariant()
@@ -31,7 +31,7 @@ class CampaignRow extends Model
 
 class SaleType extends Model
 {
-    protected $table = 'R_sale_types'; // Table name
+    protected $table = 'tb_sale_types'; // Table name
     protected $fillable = ['code', 'bulk_vins']; // Fillable fields
 
     // Ensure auto-incrementing `id` is enabled
@@ -41,13 +41,13 @@ class SaleType extends Model
 
 class TrimLevel extends Model
 {
-    protected $table = 'R_trim_levels';
+    protected $table = 'tb_trim_levels';
     protected $fillable = ['id', 'name'];
 }
 
 class VehicleProfile extends Model
 {
-    protected $table = 'R_vehicle_profiles';
+    protected $table = 'tb_vehicle_profiles';
     protected $fillable = ['vehicle_id', 'draft', 'created_at'];
 
     public function vehicle()
@@ -58,63 +58,63 @@ class VehicleProfile extends Model
 
 class Vehicle extends Model
 {
-    protected $table = 'R_vehicles';
+    protected $table = 'tb_vehicles';
     protected $fillable = ['id', 'vin'];
 }
 
 class Event extends Model
 {
-    protected $table = 'R_events';
+    protected $table = 'tb_events';
     protected $fillable = ['id'];
 }
 
 class SugarCrmLead extends Model
 {
-    protected $table = 'R_sugar_crm_leads';
+    protected $table = 'tb_sugar_crm_leads';
     protected $fillable = ['user_uuid', 'sugar_uuid'];
 }
 
 class VehicleStatus extends Model
 {
-    protected $table = 'R_vehicle_statuses';
+    protected $table = 'tb_vehicle_statuses';
     protected $fillable = ['id', 'slug'];
 }
 
 class CareersNZJobsPathway extends Model
 {
-    protected $table = 'R_careers_nz_jobs_pathways';
+    protected $table = 'tb_careers_nz_jobs_pathways';
     protected $fillable = ['jobID', 'vocationalPathway'];
 }
 
 class AsStudentAssessment extends Model
 {
-    protected $table = 'R_as_student_assessments';
+    protected $table = 'tb_as_student_assessments';
     protected $fillable = ['teacher_systemUserCode', 'schoolCode'];
 }
 
 class Message extends Model
 {
-    protected $table = 'R_messages';
+    protected $table = 'tb_messages';
     protected $fillable = ['systemUserCode', 'm_OtherSystemUserCode', 'm_ID'];
 }
 
 class KamarStaff extends Model
 {
-    protected $table = 'R_kamar_staff';
+    protected $table = 'tb_kamar_staff';
     protected $fillable = ['last_updated'];
 }
 
 class Teacher extends Model
 {
-    protected $table = 'R_teachers';
+    protected $table = 'tb_teachers';
     protected $fillable = ['ui_email'];
 }
 
-/* class Student extends Model
+class Student extends Model
 {
-    protected $table = 'R_students';
+    protected $table = 'tb_students';
     protected $fillable = ['sch_email', 'pi_email'];
-} */
+}
 
 class RealProjectCodeTest extends TestCase
 {
@@ -174,6 +174,21 @@ class RealProjectCodeTest extends TestCase
                 ['vehicle_id' => 1, 'draft' => false, 'created_at' => now()->subDays(3)],
                 ['vehicle_id' => 1, 'draft' => true, 'created_at' => now()->subDays(2)], // Draft record
                 ['vehicle_id' => 2, 'draft' => false, 'created_at' => now()->subDays(1)],
+            ]);
+
+            echo "\n******** Initializing test data: Event ********\n";
+            Event::truncate();
+            Event::insert([
+                ['id' => 1],
+                ['id' => 2],
+                ['id' => 3],
+            ]);
+
+            echo "\n******** Initializing test data: SugarCrmLead ********\n";
+            SugarCrmLead::truncate();
+            SugarCrmLead::insert([
+                ['user_uuid' => 'existing_user_1', 'sugar_uuid' => 'existing_sugar_1'],
+                ['user_uuid' => 'existing_user_2', 'sugar_uuid' => 'existing_sugar_2'],
             ]);
 
         }
@@ -327,15 +342,16 @@ class RealProjectCodeTest extends TestCase
     public function testVehicleProfilesWithVehicle(): void
     {
         echo "\n******* Testing retrieval of VehicleProfiles with associated Vehicle *******";
-        echo "\n*** Note: The current driver does not support nested queries.\n";
+        echo "****!! In the original code, the table name is hardcoded directly into the query string, which poses a risk !!";
     
         try {
             // Simulated vehicle for testing
             $vehicle = (object) ['id' => 1];
     
             // Query VehicleProfiles where the associated Vehicle matches the given vehicle ID
+            // Modify the original code to dynamically retrieve and use the correct table name
             $profiles = VehicleProfile::query()->whereHas('vehicle', function ($query) use ($vehicle) {
-                $query->where('vehicles.id', $vehicle->id);
+                $query->where((new Vehicle)->getTable() . '.id', $vehicle->id);
             })->get();
     
             // Verify the query results
@@ -411,4 +427,87 @@ class RealProjectCodeTest extends TestCase
         }
     }
 
+    public function testFindEventById(): void
+    {
+        echo "\n******* Testing Event retrieval by ID *******\n";
+
+        try {
+            // Test existing Event ID
+            $eventId = 2;
+
+            // Attempt to find the Event
+            $event = Event::query()->findOrFail($eventId);
+
+            // Verify the result
+            $this->assertNotNull($event, "Event with ID {$eventId} should exist.");
+            $this->assertEquals($eventId, $event->id, "The retrieved Event ID does not match the expected value.");
+            echo "\n******* Event with ID {$eventId} retrieved successfully: " . $event->toJson(JSON_PRETTY_PRINT) . " *******\n";
+
+            // Test non-existent Event ID
+            $nonExistentId = 999;
+
+            try {
+                Event::query()->findOrFail($nonExistentId);
+                $this->fail("Expected an exception when retrieving a non-existent Event ID: {$nonExistentId}");
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                echo "\n******* Correctly caught ModelNotFoundException for non-existent Event ID: {$nonExistentId} *******\n";
+                $this->assertTrue(true, "ModelNotFoundException correctly thrown for non-existent Event ID.");
+            }
+        } catch (\Exception $e) {
+            // Handle unexpected exceptions
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+            $this->fail('Test failed due to an unexpected exception.');
+        } finally {
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testUpdateOrCreateSugarCrmLead(): void
+    {
+        echo "\n******* Testing updateOrCreate for SugarCrmLead *******\n";
+    
+        try {
+            // Test Case 1: Update an existing record
+            $automoteUserId = 'existing_user_1';
+            $sugarCrmAccountId = 'updated_sugar_1';
+    
+            $lead = SugarCrmLead::query()->updateOrCreate(
+                ['user_uuid' => $automoteUserId],
+                ['sugar_uuid' => $sugarCrmAccountId]
+            );
+    
+            // Verify the updated record
+            $this->assertNotNull($lead, 'Lead should not be null.');
+            $this->assertEquals($automoteUserId, $lead->user_uuid, 'user_uuid does not match.');
+            $this->assertEquals($sugarCrmAccountId, $lead->sugar_uuid, 'sugar_uuid was not updated.');
+            echo "\n******* Updated Lead: " . $lead->toJson(JSON_PRETTY_PRINT) . " *******\n"; 
+
+            // Test Case 2: Create a new record
+            $newAutomoteUserId = 'new_user_1';
+            $newSugarCrmAccountId = 'new_sugar_1';
+    
+            $newLead = SugarCrmLead::query()->updateOrCreate(
+                ['user_uuid' => $newAutomoteUserId],
+                ['sugar_uuid' => $newSugarCrmAccountId]
+            );
+            echo "\n******* newLead: " . $newLead->toJson(JSON_PRETTY_PRINT) . " *******\n";
+    
+            // Verify the new record
+            $this->assertNotNull($newLead, 'New lead should not be null.');
+            $this->assertEquals($newAutomoteUserId, $newLead->user_uuid, 'New user_uuid does not match.');
+            $this->assertEquals($newSugarCrmAccountId, $newLead->sugar_uuid, 'New sugar_uuid does not match.');
+            echo "\n******* Created New Lead: " . $newLead->toJson(JSON_PRETTY_PRINT) . " *******\n";
+        } catch (\Exception $e) {
+            // Handle unexpected exceptions
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+   
 }

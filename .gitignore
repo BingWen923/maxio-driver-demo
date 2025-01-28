@@ -56,3 +56,6 @@ phpunit.result.cache
 # Ignore Node.js dependencies (if Node.js is used
 /node_modules
 
+# Ignore temporary Excel backup files in tests/unit/
+/tests/~*.xlsx
+
