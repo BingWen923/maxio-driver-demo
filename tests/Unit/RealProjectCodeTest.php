@@ -59,7 +59,12 @@ class VehicleProfile extends Model
 class Vehicle extends Model
 {
     protected $table = 'tb_vehicles';
-    protected $fillable = ['id', 'vin'];
+    protected $fillable = ['id', 'vin','status_id'];
+
+    public function status()
+    {
+        return $this->belongsTo(VehicleStatus::class, 'status_id');
+    }
 }
 
 class Event extends Model
@@ -78,6 +83,11 @@ class VehicleStatus extends Model
 {
     protected $table = 'tb_vehicle_statuses';
     protected $fillable = ['id', 'slug'];
+
+    public function vehicles()
+    {
+        return $this->hasMany(Vehicle::class, 'status_id');
+    }
 }
 
 class CareersNZJobsPathway extends Model
@@ -165,8 +175,9 @@ class RealProjectCodeTest extends TestCase
             echo "\n******** Initializing test data: Vehicle and VehicleProfile\n";
             Vehicle::truncate();
             Vehicle::insert([
-                ['id' => 1, 'vin' => 'VIN001'],
-                ['id' => 2, 'vin' => 'VIN002'],
+                ['id' => 1, 'vin' => 'VIN001', 'status_id' => 1],
+                ['id' => 2, 'vin' => 'VIN002', 'status_id' => 2],
+                ['id' => 3, 'vin' => 'VIN003', 'status_id' => 5],
             ]);
             
             VehicleProfile::truncate();
@@ -191,6 +202,15 @@ class RealProjectCodeTest extends TestCase
                 ['user_uuid' => 'existing_user_2', 'sugar_uuid' => 'existing_sugar_2'],
             ]);
 
+            echo "\n******** Initializing test data: VehicleStatus ********\n";
+            VehicleStatus::truncate();
+            VehicleStatus::insert([
+                ['id' => 1, 'slug' => 'DealerStock', 'available' => true],
+                ['id' => 2, 'slug' => 'Profiled', 'available' => true],
+                ['id' => 3, 'slug' => 'NotApplicable', 'available' => true],
+                ['id' => 4, 'slug' => 'Landed', 'available' => false],
+                ['id' => 5, 'slug' => 'Available', 'available' => true],
+            ]);
         }
     }
 
@@ -509,5 +529,84 @@ class RealProjectCodeTest extends TestCase
             restore_exception_handler();
         }
     }
-   
+
+    public function testVehicleWithLatestStatusSlug(): void
+    {
+        echo "\n******* Testing retrieval of Vehicle with latest status slug *******\n";
+
+        try {
+            // Simulated query for Vehicle with latest status slug
+            $vehicle = Vehicle::query()
+                ->with('status')
+                ->orderByDesc(
+                    VehicleStatus::query()
+                        ->select('slug')
+                        ->whereColumn('id', 'status_id')
+                        ->orderBy('slug', 'desc')
+                        ->limit(1)
+                )
+                ->first();
+
+            // Verify the retrieved vehicle
+            $this->assertNotNull($vehicle, 'No vehicle was retrieved.');
+            echo "\n******* Retrieved Vehicle: " . $vehicle->toJson(JSON_PRETTY_PRINT) . " *******\n";
+
+            // Verify the associated status
+            $this->assertNotNull($vehicle->status, 'Vehicle should have an associated status.');
+            echo "\n******* Retrieved Status: " . $vehicle->status->toJson(JSON_PRETTY_PRINT) . " *******\n";
+
+            // Additional validations
+            $expectedSlug = VehicleStatus::query()->orderBy('slug', 'desc')->value('slug');
+            $this->assertEquals($expectedSlug, $vehicle->status->slug, 'The latest status slug does not match the expected value.');
+        } catch (\Exception $e) {
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testFilterOutVehiclesWithSpecificStatuses(): void
+    {
+        echo "\n******* Testing filtering of vehicles with specific statuses *******\n";
+
+        try {
+            // Query to exclude vehicles with specific statuses
+            $query = Vehicle::query();
+            $query->whereDoesntHave('status', function ($query) {
+                // Exclude Dealer Stock, Profiled, and Not Applicable VINs
+                $query->whereIn('slug', [
+                    'DealerStock',
+                    'Profiled',
+                    'NotApplicable',
+                ]);
+
+                // Exclude Landed VINs that are not available
+                $query->orWhere(function ($query) {
+                    $query->where('slug', 'Landed')
+                    ->where('available', false);
+                });
+            });
+
+            // Execute the query and retrieve results
+            $vehicles = $query->get();
+
+            // Verify the filtered results
+            echo "\n******* Retrieved Vehicles: " . $vehicles->toJson(JSON_PRETTY_PRINT) . " *******\n";
+            $this->assertNotEmpty($vehicles, 'No vehicles retrieved after filtering.');
+            $this->assertCount(1, $vehicles, 'The number of vehicles retrieved does not match the expected count.');
+            $this->assertEquals('VIN003', $vehicles->first()->vin, 'The retrieved vehicle does not match the expected result.');
+        } catch (\Exception $e) {
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            // Ensure cleanup
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
 }
