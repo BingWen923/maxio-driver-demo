@@ -12,6 +12,7 @@ class Student extends Model
     protected $table = 'table_student';
     protected $fillable = ['name', 'email', 'college', 'grades'];
     protected $keyType = 'int';
+    protected $primaryKey = 'id';
     public $incrementing = true;
 
     // Define the one-to-one relationship

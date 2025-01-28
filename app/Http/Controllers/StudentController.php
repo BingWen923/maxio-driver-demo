@@ -450,9 +450,17 @@ class StudentController extends Controller
         }
     }
 
+    // public function edit(Student $student)
+    // {
+    //     // Show edit form
+    //     dd($student);
+    //     return view('students.edit', compact('student'));
+    // }
     public function edit(Student $student)
     {
         // Show edit form
+//        $s = Student::find((int)$student);
+//        $student =$s;
         return view('students.edit', compact('student'));
     }
 

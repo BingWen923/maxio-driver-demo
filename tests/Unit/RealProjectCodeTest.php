@@ -5,7 +5,7 @@ namespace tests\Unit;
 use PHPUnit\Framework\TestCase;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use App\Models\Phone;
 
 class CampaignManagerVinModelVariant extends Model
 {
@@ -31,8 +31,12 @@ class CampaignRow extends Model
 
 class SaleType extends Model
 {
-    protected $table = 'R_sale_types';
-    protected $fillable = ['code', 'bulk_vins'];
+    protected $table = 'R_sale_types'; // Table name
+    protected $fillable = ['code', 'bulk_vins']; // Fillable fields
+
+    // Ensure auto-incrementing `id` is enabled
+    public $incrementing = true; // Enable auto-increment
+    protected $keyType = 'int'; // Primary key type is integer
 }
 
 class TrimLevel extends Model
@@ -44,7 +48,7 @@ class TrimLevel extends Model
 class VehicleProfile extends Model
 {
     protected $table = 'R_vehicle_profiles';
-    protected $fillable = ['vehicle_id'];
+    protected $fillable = ['vehicle_id', 'draft', 'created_at'];
 
     public function vehicle()
     {
@@ -106,11 +110,11 @@ class Teacher extends Model
     protected $fillable = ['ui_email'];
 }
 
-class Student extends Model
+/* class Student extends Model
 {
     protected $table = 'R_students';
     protected $fillable = ['sch_email', 'pi_email'];
-}
+} */
 
 class RealProjectCodeTest extends TestCase
 {
@@ -139,6 +143,38 @@ class RealProjectCodeTest extends TestCase
 
             echo "\n******** Initializing test data: CampaignRow\n";
             CampaignRow::truncate();
+
+            echo "\n******** Initializing test data: SaleType\n";
+            SaleType::truncate();
+            SaleType::insert([
+                ['code' => 'DFLEET', 'bulk_vins' => false],
+                ['code' => 'INTFLEET', 'bulk_vins' => false],
+                ['code' => 'GFLEET', 'bulk_vins' => false],
+                ['code' => 'RFLEET', 'bulk_vins' => false],
+                ['code' => 'OTHER', 'bulk_vins' => false],
+            ]);
+
+            echo "\n******** Initializing test data: TrimLevel\n";
+            TrimLevel::truncate();
+            TrimLevel::insert([
+                ['id' => 1, 'name' => 'Base'],
+                ['id' => 2, 'name' => 'Sport'],
+                ['id' => 3, 'name' => 'Luxury'],
+            ]);
+
+            echo "\n******** Initializing test data: Vehicle and VehicleProfile\n";
+            Vehicle::truncate();
+            Vehicle::insert([
+                ['id' => 1, 'vin' => 'VIN001'],
+                ['id' => 2, 'vin' => 'VIN002'],
+            ]);
+            
+            VehicleProfile::truncate();
+            VehicleProfile::insert([
+                ['vehicle_id' => 1, 'draft' => false, 'created_at' => now()->subDays(3)],
+                ['vehicle_id' => 1, 'draft' => true, 'created_at' => now()->subDays(2)], // Draft record
+                ['vehicle_id' => 2, 'draft' => false, 'created_at' => now()->subDays(1)],
+            ]);
 
         }
     }
@@ -208,4 +244,171 @@ class RealProjectCodeTest extends TestCase
             restore_exception_handler();
         }
     }
+
+    public function testBulkUpdateSaleTypes(): void
+    {
+        echo "\n******* Testing bulk update of SaleType records *******\n";
+
+        try {
+            // Define the codes to update
+            $codes = ['DFLEET', 'INTFLEET', 'GFLEET', 'RFLEET'];
+
+            // Perform the bulk update
+            SaleType::query()->whereIn('code', $codes)->get()->each(function (SaleType $saleType) {
+                $saleType->bulk_vins = true;
+                $saleType->save();
+            });
+
+            // Verify that the specified records were updated
+            $updatedRecords = SaleType::query()->whereIn('code', $codes)->get();
+            foreach ($updatedRecords as $record) {
+                $this->assertTrue($record->bulk_vins, "SaleType with code {$record->code} should have bulk_vins set to true.");
+            }
+
+            // Verify that records not in the update list remain unchanged
+            $nonUpdatedRecords = SaleType::query()->whereNotIn('code', $codes)->get();
+            foreach ($nonUpdatedRecords as $record) {
+                $this->assertFalse($record->bulk_vins, "SaleType with code {$record->code} should have bulk_vins set to false.");
+            }
+
+            echo "\n******* SaleType bulk update test passed successfully *******\n";
+        } catch (\Exception $e) {
+            // Handle exceptions
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            // Ensure cleanup
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testFindTrimLevelById(): void
+    {
+        echo "\n******* Testing retrieval of a TrimLevel by ID *******\n";
+    
+        try {
+            // Case 1: Test existing ID
+            $id = 2;
+    
+            // Retrieve the TrimLevel record
+            $trimLevel = TrimLevel::query()->where('id', $id)->firstOrFail();
+    
+            // Verify the retrieval
+            $this->assertNotNull($trimLevel, "TrimLevel with ID {$id} should exist.");
+            $this->assertEquals('Sport', $trimLevel->name, "The name of the TrimLevel with ID {$id} should be 'Sport'.");
+    
+            echo "\n******* TrimLevel record retrieved successfully: ID = {$trimLevel->id}, Name = {$trimLevel->name} *******\n";
+    
+            // Case 2: Test non-existent ID
+            $nonExistentId = 999;
+    
+            try {
+                TrimLevel::query()->where('id', $nonExistentId)->firstOrFail();
+                $this->fail("Expected an exception when retrieving a TrimLevel with a non-existent ID: {$nonExistentId}");
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                echo "\n******* Correctly caught ModelNotFoundException for non-existent ID: {$nonExistentId} *******\n";
+                $this->assertTrue(true, "ModelNotFoundException correctly thrown for non-existent ID.");
+            }
+    
+        } catch (\Exception $e) {
+            // Handle unexpected exceptions
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            // Ensure cleanup
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testVehicleProfilesWithVehicle(): void
+    {
+        echo "\n******* Testing retrieval of VehicleProfiles with associated Vehicle *******";
+        echo "\n*** Note: The current driver does not support nested queries.\n";
+    
+        try {
+            // Simulated vehicle for testing
+            $vehicle = (object) ['id' => 1];
+    
+            // Query VehicleProfiles where the associated Vehicle matches the given vehicle ID
+            $profiles = VehicleProfile::query()->whereHas('vehicle', function ($query) use ($vehicle) {
+                $query->where('vehicles.id', $vehicle->id);
+            })->get();
+    
+            // Verify the query results
+            $this->assertNotEmpty($profiles, 'No VehicleProfiles found for the given vehicle ID.');
+            $this->assertCount(1, $profiles, 'The number of VehicleProfiles retrieved does not match the expected count.');
+    
+            // Log the retrieved profiles
+            echo "\n******* Retrieved VehicleProfiles: " . $profiles->toJson(JSON_PRETTY_PRINT) . " *******\n";
+        } catch (\Exception $e) {
+            // Simplified error message
+            echo "\nError: Unable to complete the test due to unsupported nested query.\n";
+            $this->fail('Test failed as expected due to unsupported nested query.');
+        } finally {
+            // Ensure cleanup
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testLatestNonDraftRecordByVin(): void
+    {
+        echo "\n******* Testing retrieval of the latest non-draft VehicleProfile record by VIN *******\n";
+
+        try {
+            // Simulated VIN for testing
+            $vin = 'VIN001';
+
+            // Run the query on VehicleProfile
+            $record = VehicleProfile::query()
+                ->where('vehicle_id', Vehicle::query()->where('vin', $vin)->value('id'))
+                ->where('draft', false)
+                ->latest('created_at')
+                ->first();
+
+            // Verify the result
+            $this->assertNotNull($record, 'No VehicleProfile record found for the given VIN and non-draft status.');
+            $this->assertEquals(1, $record->vehicle_id, 'Vehicle ID does not match the expected value.');
+            $this->assertFalse($record->draft, 'The record is not marked as non-draft.');
+            echo "\n*** Retrieved VehicleProfile record: " . $record->toJson(JSON_PRETTY_PRINT) . " ***\n";
+        } catch (\Exception $e) {
+            echo "\nError: Failed to retrieve the latest non-draft VehicleProfile record for VIN $vin.";
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            // Ensure cleanup
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
+    public function testFindSaleTypeById(): void
+    {
+        echo "\n******* Testing SaleType retrieval by ID *******\n";
+
+        try {
+            // Simulated model object for testing
+            $model = (object) ['id' => 2];
+
+            // Retrieve the SaleType by its ID
+            //$saleType = SaleType::query()->find($model->id);
+            $saleType = SaleType::find(2);
+
+            // Verify the result
+            $this->assertNotNull($saleType, "SaleType with ID {$model->id} should exist.");
+            $this->assertEquals('INTFLEET', $saleType->code, "The code for SaleType ID {$model->id} does not match the expected value.");
+            echo "\n******* SaleType with ID {$model->id} found successfully: " . $saleType->toJson(JSON_PRETTY_PRINT) . " *******\n";
+        } catch (\Exception $e) {
+            echo "\nError: " . $e->getMessage();
+            echo "\nTrace: " . $e->getTraceAsString();
+            $this->fail('Test failed due to an exception.');
+        } finally {
+            restore_error_handler();
+            restore_exception_handler();
+        }
+    }
+
 }

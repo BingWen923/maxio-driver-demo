@@ -16,7 +16,6 @@ Thumbs.db
 /composer.lock
 
 # Ignore environment configuration files
-.env
 .env.*.local
 
 # Ignore PHP cache and log files
