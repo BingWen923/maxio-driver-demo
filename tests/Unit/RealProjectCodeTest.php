@@ -831,9 +831,9 @@ class RealProjectCodeTest extends TestCase
                 ->get();
 
             // Verify the query results
+            echo "\n******* Retrieved Messages: " . $messages->toJson(JSON_PRETTY_PRINT) . " *******\n";
             $this->assertNotEmpty($messages, 'No messages were retrieved for the given systemUserCode.');
             $this->assertEquals(2, $messages->count(), 'The number of retrieved messages does not match the expected count.');
-            echo "\n******* Retrieved Messages: " . $messages->toJson(JSON_PRETTY_PRINT) . " *******\n";
         } catch (\Exception $e) {
             echo "\nError: " . $e->getMessage();
             $this->fail('Test failed due to an exception.');
