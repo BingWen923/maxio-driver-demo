@@ -45,7 +45,13 @@ To test actual project code provided by Thomas, use the command:
 php tests/unit/runRealProjectCodeTest.php
 ```
 
-This script contains mock models and initializes test data. It is designed to work with `tests/RealProjectCode.xlsx`.
+This script contains mock models and initializes test data. It is designed to work with `RealProjectCode.xlsx`.
+
+## Known Limitations
+- **Indexing functionality**: Integration and testing have not been completed.
+- **Multi-user concurrency testing**: Not conducted, and there may be significant gaps.
+- **Laravel use case variations**: Due to Laravel's diverse use cases, different implementations of the same functionality may still present issues. Be aware of this.
+- **Nested queries**: Likely not supported.
 
 ---
 Ensure that all dependencies and configurations are set up correctly before running the tests or demo application. For any issues, refer to the documentation or reach out to the project maintainers.
